@@ -1,0 +1,49 @@
+{
+	"name": "base-ui",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "A Vue 3 component library",
+	"author": {
+		"name": "AzureHearted",
+		"url": "https://github.com/AzureHearted"
+	},
+	"license": "MIT",
+	"homepage": "https://github.com/AzureHearted/base-ui/tree/main/#readme",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/AzureHearted/base-ui.git"
+	},
+	"bugs": {
+		"url": "https://github.com/AzureHearted/base-ui/issues"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/base-ui.js"
+		},
+		"./style.css": "./dist/base-ui.css"
+	},
+	"module": "./dist/base-ui.es.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"watch": "vite build --watch",
+		"build": "run-p type-check build-only",
+		"build-only": "vite build",
+		"type-check": "vue-tsc --build --force",
+		"prepare": "pnpm run build"
+	},
+	"peerDependencies": {
+		"vue": "^3.5.31"
+	},
+	"devDependencies": {
+		"@vitejs/plugin-vue": "^6.0.0",
+		"@vue/tsconfig": "^0.5.1",
+		"typescript": "~5.3.3",
+		"vite": "^7.2.6",
+		"vite-plugin-dts": "^3.7.2",
+		"vue-tsc": "^3.1.6"
+	}
+}
