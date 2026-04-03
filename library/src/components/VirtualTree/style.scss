@@ -1,0 +1,21 @@
+@use "sass:map";
+
+$colors: (
+	light: (
+		text-color: #000,
+		icon-bgColor: #ccc,
+		loading-icon-color: hsla(210, 100%, 50%, 0.8),
+		label-hover-bgColor: hsl(210, 44%, 90%),
+	),
+	dark: (
+		text-color: #fff,
+		icon-bgColor: hsl(0, 0%, 30%),
+		loading-icon-color: hsl(192, 100%, 50%, 0.8),
+		label-hover-bgColor: hsl(240, 4%, 28%),
+	),
+);
+
+@function getTreeComponentColor($theme, $key) {
+	$theme-map: map.get($colors, $theme);
+	@return map.get($theme-map, $key);
+}

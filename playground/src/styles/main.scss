@@ -7,6 +7,11 @@
 	font-weight: normal;
 }
 
+@mixin darkTheme {
+	color: #f6f6f6;
+	background-color: #18181c;
+}
+
 body {
 	line-height: 1.6;
 	font-family:
@@ -26,12 +31,11 @@ body {
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-	background-color: white;
+	background-color: #f6f6f6;
 }
 
-@media (prefers-color-scheme: dark) {
+:root.dark {
 	body {
-		color: white;
-		background-color: #1a1a1a;
+		@include darkTheme;
 	}
 }

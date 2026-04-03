@@ -1,0 +1,22 @@
+@use "sass:map";
+@use "./styles.scss" as *;
+@use "./colors.scss" as *;
+
+
+// 获取主题样式
+@function getThemeStyle($key) {
+	@return map.get($theme-style, $key);
+}
+
+// 获取指定的主题颜色
+@function getThemeColor($theme, $key) {
+	$theme-map: map.get($theme-colors, $theme);
+	@return map.get($theme-map, $key);
+}
+
+@mixin globalTheme() {
+	font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	line-height: 16px;
+	font-weight: 400;
+}

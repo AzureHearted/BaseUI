@@ -1,0 +1,81 @@
+@use "sass:map";
+@use "@/styles/themes/main.scss" as *;
+
+// 去除input默认样式
+@mixin clearDefaultInputStyle($selector: input) {
+	#{$selector} {
+		appearance: none;
+		-webkit-appearance: none;
+
+		border: none;
+		padding: unset;
+		background: transparent;
+		outline: none;
+
+		font-family: inherit;
+		font-size: inherit;
+
+		border-radius: 0;
+
+		&:focus {
+			outline: none;
+		}
+
+		&[type="number"]::-webkit-outer-spin-button,
+		&[type="number"]::-webkit-inner-spin-button {
+			-webkit-appearance: none;
+			margin: 0;
+		}
+	}
+}
+
+@mixin base-input-theme-variables($theme: "light") {
+	--text-color: #{getThemeColor($theme, text)};
+	--background-color: #{getThemeColor($theme, control-background)};
+	--border-color: #{getThemeColor($theme, info)};
+	--border-hover-color: #{getThemeColor($theme, success)};
+	--border: #{1px solid var(--border-color)};
+	@if $theme == "light" {
+		--icon-color: rgb(194, 194, 194);
+		--icon-hover-color: rgb(146, 146, 146);
+	} @else {
+		--icon-color: rgba(255, 255, 255, 0.38);
+		--icon-hover-color: rgba(255, 255, 255, 0.48);
+	}
+}
+
+$input-sizes: (
+	tiny: (
+		font-size: 12px,
+		height: 22px,
+		padding: 8px,
+		icon-size: 16px,
+	),
+	small: (
+		font-size: 14px,
+		height: 28px,
+		padding: 10px,
+		icon-size: 16px,
+	),
+	medium: (
+		font-size: 16px,
+		height: 34px,
+		padding: 12px,
+		icon-size: 18px,
+	),
+	large: (
+		font-size: 15px,
+		height: 40px,
+		padding: 14px,
+		icon-size: 20px,
+	),
+);
+
+@mixin base-input-size-variables($size: medium) {
+	$config: map.get($input-sizes, $size);
+
+	--font-size: #{map.get($config, font-size)};
+	--height: #{map.get($config, height)};
+	--padding-size: #{map.get($config, padding)};
+	--icon-size: #{map.get($config, icon-size)};
+}

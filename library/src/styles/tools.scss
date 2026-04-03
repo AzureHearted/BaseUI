@@ -1,0 +1,70 @@
+// 去除input默认样式
+@mixin clearDefaultInputStyle($selector: input) {
+	#{$selector} {
+		appearance: none;
+		-webkit-appearance: none;
+
+		border: none;
+		padding: unset;
+		background: transparent;
+		outline: none;
+
+		font-family: inherit;
+		font-size: inherit;
+
+		border-radius: 0;
+
+		&:focus {
+			outline: none;
+		}
+
+		&[type="number"]::-webkit-outer-spin-button,
+		&[type="number"]::-webkit-inner-spin-button {
+			-webkit-appearance: none;
+			margin: 0;
+		}
+	}
+}
+
+// 去除textarea默认样式
+@mixin clearDefaultTextareaStyle($selector: textarea) {
+	#{$selector} {
+		// 1. 基础外观重置
+		appearance: none;
+		-webkit-appearance: none;
+
+		// 2. 移除边框、背景、内边距
+		border: none;
+		padding: 0; // 使用 0 比 unset 在旧版浏览器兼容性更好
+		background: transparent;
+		outline: none;
+
+		// 3. 继承父级字体属性
+		font-family: inherit;
+		font-size: inherit;
+		line-height: inherit; // 确保行高也继承，防止文字偏移
+		color: inherit;
+
+		// 4. 关键：去除缩放手柄
+		resize: none;
+
+		// 5. 去除圆角和溢出处理
+		border-radius: 0;
+		overflow: auto; // 默认 auto，只有内容溢出时才显示滚动条
+
+		// 6. 焦点状态
+		&:focus {
+			outline: none;
+		}
+
+		// 7. 针对特定浏览器的微调
+		&::-webkit-scrollbar {
+			display: none; // 如果你想彻底隐藏滚动条，取消此行注释
+		}
+
+		// 移除 IE 默认的清除按钮和滚动条样式
+		&::-ms-expand {
+			display: none;
+		}
+	}
+}
