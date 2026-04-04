@@ -144,7 +144,6 @@ watch(
 const state = reactive({
   isDragging: false, // 拖拽标识符
   percentage: 0.5, // 百分比
-  defaultSize: 0.5 as number | string, // 默认尺寸
 });
 
 const pane1Size = ref<number>(0);
