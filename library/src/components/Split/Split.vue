@@ -386,7 +386,7 @@ function handleTreggerDoubleClick(_e: MouseEvent) {
       position: relative;
       background-color: var(--resize-color);
       // 分栏条宽度
-      flex-basis: --resize-trigger-size;
+      flex-basis: var(--resize-trigger-size);
       background-size: cover;
       background-position: center;
 
@@ -398,7 +398,7 @@ function handleTreggerDoubleClick(_e: MouseEvent) {
         content: "";
         position: absolute;
         inset: 0;
-        width: --resize-trigger-size;
+        width: var(--resize-trigger-size);
         height: 100%;
         z-index: 1;
         transition:
