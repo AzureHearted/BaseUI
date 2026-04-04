@@ -1,7 +1,9 @@
 import type { TeleportProps, HTMLAttributes } from "vue";
 import type { Property } from "csstype";
+import type { ThemeMode } from "@/theme";
 
 export interface ScrollbarProps {
+  theme?: ThemeMode;
   /** value 绑定值，可以是百分比或像素值，取决于 model-mode @default 'px' */
   valueMode?: "percent" | "px";
   /** 禁用虚拟滚动条（改用原生滚动条） @default false */
