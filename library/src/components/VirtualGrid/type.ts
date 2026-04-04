@@ -1,4 +1,4 @@
-export interface VirtualMasonryProps {
+export interface VirtualGridProps {
   /** 数据列表 */
   items: Item[];
   /** gap 布局间隔 @default 5 */
@@ -29,7 +29,6 @@ export interface VirtualMasonryProps {
 // t 数据定义
 export interface Item {
   id: string;
-  aspectRatio: number;
   [key: string]: any;
 }
 

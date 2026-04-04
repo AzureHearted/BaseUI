@@ -1,7 +1,7 @@
 <template>
   <div
     ref="containerDOM"
-    class="base-virtual-masonry__container"
+    class="base-virtual-grid__container"
     :style="{
       height: !scrollContainer ? '100%' : '',
       overflow: !scrollContainer ? 'hidden auto' : '',
@@ -10,17 +10,16 @@
     <!-- 包裹容器 -->
     <div
       ref="wrapDOM"
-      class="base-virtual-masonry__wrap"
+      class="base-virtual-grid__wrap"
       :style="{
         height: `${state.wrapState.height}px`,
       }"
     >
       <template v-for="(item, index) in state.visibleList" :key="item.id">
         <div
-          class="base-virtual-masonry__item"
+          class="base-virtual-grid__item"
           :class="{
-            'base-virtual-masonry__item__allow-transition':
-              !!allowItemTransition,
+            'base-virtual-grid__item__allow-transition': !!allowItemTransition,
           }"
           :data-index="state.visiblePosList[index].realIndex"
           :style="{
@@ -56,15 +55,15 @@ import {
   type ShallowRef,
 } from "vue";
 
-import type { Item, Pos, VirtualMasonryProps } from "./types";
+import type { Item, Pos, VirtualGridProps } from "./type";
 
 import { useDebounceFn, useResizeObserver, useScroll } from "@vueuse/core";
 
 defineOptions({
-  name: "BaseVirtualMasonry",
+  name: "BaseVirtualGrid",
 });
 
-const props = withDefaults(defineProps<VirtualMasonryProps>(), {
+const props = withDefaults(defineProps<VirtualGridProps>(), {
   items: () => [],
   gap: 5,
   columns: 3,
@@ -83,8 +82,7 @@ const state = reactive({
   visibleList: [] as Item[], // 可见的item列表
   itemsPos: [] as Pos[], // 所有item的位置信息列表
   visiblePosList: [] as Pos[], // 可见item的位置信息列表
-  columnPosList: [] as Pos[][], // 每一列的 item 位置信息
-  isFreeze: false, // 冻结标识符
+  isFreeze: false,
   viewportState: {
     width: 0,
     height: 0,
@@ -150,6 +148,7 @@ onMounted(() => {
 // f 初始化
 async function init() {
   await nextTick();
+
   state.wrapState.width = wrapDOM.value?.clientWidth || 0;
   state.viewportState.width =
     (!!props.scrollContainer
@@ -216,75 +215,46 @@ watch(
   },
 );
 
-const computedItemPosDebounce = useDebounceFn(async (list: Item[]) => {
+const computedItemPosDebounce = useDebounceFn((list: Item[]) => {
   requestAnimationFrame(async () => {
     await computedItemPos(list);
     computeVisibleStateRAF();
   });
 }, 100);
 
-// f 计算所有 item 位置 —— Masonry 瀑布流
+// f 计算所有item位置
 async function computedItemPos(list: Item[]) {
   await nextTick();
   if (state.isFreeze) return;
 
   const width = columnWidth.value;
-  const gap = safeGap.value;
+  const height = width;
   const column = safeColumns.value;
-
-  // 每列当前累计高度
-  const colHeights = new Array(column).fill(0);
+  const gap = safeGap.value;
 
   const newPos: Pos[] = new Array(list.length);
-
-  // 记录每列位置数组
-  const columnPosList: Pos[][] = Array.from(
-    { length: column },
-    () => [] as Pos[],
-  );
-
   for (let index = 0; index < list.length; index++) {
-    const item = list[index];
-
-    // 根据宽度和宽高比计算高度
-    const height = width / item.aspectRatio;
-
-    // 找到当前最短列
-    let minCol = 0;
-    for (let c = 1; c < column; c++) {
-      if (colHeights[c] < colHeights[minCol]) {
-        minCol = c;
-      }
-    }
-
-    // 定位：放入 minCol 列
-    const left = minCol * (width + gap);
-    const top = colHeights[minCol];
-
-    const pos: Pos = {
-      id: item.id,
+    const left = (width + gap) * (index % column);
+    const top = (height + gap) * Math.floor(index / column);
+    newPos[index] = {
+      id: list[index].id,
       realIndex: index,
       left,
       top,
       width,
       height,
     };
-
-    newPos[index] = pos;
-
-    columnPosList[minCol].push(pos);
-
-    // 更新该列高度 (如果是排列最后一个则不需要加gap)
-    colHeights[minCol] += height + (index < list.length - 1 ? gap : 0);
   }
 
-  // 批量替换响应式
+  // 批量替换响应式 itemsPos —— 这只会触发一次更新
   state.itemsPos = newPos;
-  state.columnPosList = columnPosList;
+
+  // 如果你维护 state.list 同步必要，类似批量替换
   state.list = list;
 
-  // 整体高度 = 所有列高度中的最大值
-  state.wrapState.height = Math.max(...colHeights);
+  // wrap height 也批量算（不要在循环里赋值）
+  const row = Math.ceil(list.length / column);
+  state.wrapState.height = height * row + gap * (row - 1);
 }
 
 // 使用 rAF 封装
@@ -301,65 +271,28 @@ const computeVisibleStateRAF = () => {
 
 // f 计算可见可见状态
 function computeVisibleState() {
+  if (state.isFreeze) return;
+  const itemHeight = columnWidth.value;
+  const gap = safeGap.value;
+  const h = itemHeight + gap;
+  const cols = safeColumns.value;
+
+  // 计算paddingTop
   const paddingTop = state.viewportState.paddingTop;
-
   let scrollY = Math.floor(state.scrollState.y);
-
+  // 根据paddingTop进行修正
   if (!!props.scrollContainer) {
     scrollY = scrollY > paddingTop ? scrollY - paddingTop : 0;
   }
 
-  const viewBottom = scrollY + state.viewportState.height;
+  const startRow = Math.floor(scrollY / h);
+  const endRow = Math.floor((scrollY + state.viewportState.height) / h);
 
-  const visiblePosList: Pos[] = [];
+  const startIndex = startRow * cols;
+  const endIndex = Math.min((endRow + 1) * cols - 1, state.list.length - 1);
 
-  for (const col of state.columnPosList) {
-    if (col.length === 0) continue;
-
-    // 找第一个可见项
-    let start = binarySearch(col, scrollY);
-    // 🔥回溯：向上回查所有可能与 scrollY 重叠的元素
-    while (start > 0 && col[start - 1].top + col[start - 1].height >= scrollY) {
-      start--;
-    }
-
-    // 找最后一个可见项
-    let end = binarySearch(col, viewBottom);
-
-    // 修正
-    if (start < 0) start = 0;
-    if (end >= col.length) end = col.length - 1;
-
-    for (let i = start; i <= end; i++) {
-      const pos = col[i];
-      if (pos.top + pos.height >= scrollY && pos.top <= viewBottom) {
-        visiblePosList.push(pos);
-      }
-    }
-  }
-
-  // 按照真实索引排序
-  const sortedPosList = [...visiblePosList].sort(
-    (a, b) => a.realIndex - b.realIndex,
-  );
-  // 按照真实索引排序后的数据
-  const sortedDataList = sortedPosList.map((p) => state.list[p.realIndex]);
-
-  // 一次性同步到响应式状态
-  state.visiblePosList = sortedPosList;
-  state.visibleList = sortedDataList;
-}
-
-// f (辅助函数) 二分查找：返回第一个 top > value 的 index
-function binarySearch(list: Pos[], value: number) {
-  let low = 0,
-    high = list.length - 1;
-  while (low <= high) {
-    const mid = (low + high) >> 1;
-    if (list[mid].top < value) low = mid + 1;
-    else high = mid - 1;
-  }
-  return low;
+  state.visibleList = state.list.slice(startIndex, endIndex + 1);
+  state.visiblePosList = state.itemsPos.slice(startIndex, endIndex + 1);
 }
 
 /**
@@ -416,14 +349,14 @@ defineExpose({
 
 <style lang="scss" scoped>
 /* 容器 */
-.base-virtual-masonry {
+.base-virtual-grid {
   /* &__container {
+			border: 1px solid rgb(123, 123, 123);
 		} */
 
   &__wrap {
     position: relative;
     width: 100%;
-    /* border: 1px solid rgb(123, 123, 123); */
   }
 
   &__item {

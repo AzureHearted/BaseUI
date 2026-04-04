@@ -1,7 +1,7 @@
 <template>
   <div
     ref="containerDOM"
-    class="base-virtual-masonry__container"
+    class="base-virtual-justified__container"
     :style="{
       height: !scrollContainer ? '100%' : '',
       overflow: !scrollContainer ? 'hidden auto' : '',
@@ -10,16 +10,16 @@
     <!-- 包裹容器 -->
     <div
       ref="wrapDOM"
-      class="base-virtual-masonry__wrap"
+      class="base-virtual-justified__wrap"
       :style="{
         height: `${state.wrapState.height}px`,
       }"
     >
       <template v-for="(item, index) in state.visibleList" :key="item.id">
         <div
-          class="base-virtual-masonry__item"
+          class="base-virtual-justified__item"
           :class="{
-            'base-virtual-masonry__item__allow-transition':
+            'base-virtual-justified__item__allow-transition':
               !!allowItemTransition,
           }"
           :data-index="state.visiblePosList[index].realIndex"
@@ -56,18 +56,19 @@ import {
   type ShallowRef,
 } from "vue";
 
-import type { Item, Pos, VirtualMasonryProps } from "./types";
+import type { Item, Pos, VirtualJustifiedProps } from "./type";
 
 import { useDebounceFn, useResizeObserver, useScroll } from "@vueuse/core";
 
 defineOptions({
-  name: "BaseVirtualMasonry",
+  name: "BaseVirtualJustified",
 });
 
-const props = withDefaults(defineProps<VirtualMasonryProps>(), {
+const props = withDefaults(defineProps<VirtualJustifiedProps>(), {
   items: () => [],
   gap: 5,
-  columns: 3,
+  targetRowHeight: 300,
+  lastRowFill: false,
 });
 
 // s 容器DOM
@@ -83,7 +84,7 @@ const state = reactive({
   visibleList: [] as Item[], // 可见的item列表
   itemsPos: [] as Pos[], // 所有item的位置信息列表
   visiblePosList: [] as Pos[], // 可见item的位置信息列表
-  columnPosList: [] as Pos[][], // 每一列的 item 位置信息
+  rowPosList: [] as Pos[][], // 每一行的 item 位置信息
   isFreeze: false, // 冻结标识符
   viewportState: {
     width: 0,
@@ -104,42 +105,15 @@ const scrollContainerDOM = computed(() => {
   return props.scrollContainer ? props.scrollContainer : containerDOM.value;
 });
 
-// j 每列列宽
-const columnWidth = computed(() => {
-  const colWidth =
-    (state.wrapState.width - (safeColumns.value - 1) * safeGap.value) /
-    safeColumns.value;
-  return colWidth;
-});
-
 // j 间隙 (从prop中安全的获取结果)
 const safeGap = computed(() => {
   return props.gap >= 0 ? props.gap : 0;
 });
 
-// j 列数 (从prop中安全的获取结果)
-const safeColumns = computed(() => {
-  // 判断是否传入breakpoints
-  if (props.breakpoints && Object.keys(props.breakpoints).length > 0) {
-    // 从最大的断点开始检查
-    for (const breakpoint of sortedBreakpoints.value) {
-      if (state.wrapState.width >= breakpoint) {
-        // 找到第一个满足条件的断点，并返回其列数
-        return props.breakpoints[breakpoint];
-      }
-    }
-    // 如果容器宽度小于所有断点，则返回最小断点的列数（通常是 '0' 键）
-    return props.breakpoints[0];
-  } else {
-    return props.columns > 0 ? props.columns : 1;
-  }
-});
-
-// j 缓存和排序断点键名，只执行一次
-const sortedBreakpoints = computed(() => {
-  return Object.keys(props.breakpoints || {})
-    .map((key) => parseInt(key))
-    .sort((a, b) => b - a); // 降序排序，从最大断点开始检查
+// j 目标行高 (从props中安全的获取结果)
+const safeTargetRowHeight = computed(() => {
+  // 100 的目标行高作为安全下限，防止视口内容过多
+  return props.targetRowHeight > 0 ? props.targetRowHeight : 100;
 });
 
 // w 组件挂载时进行初始化
@@ -207,8 +181,12 @@ function bindingScrollContainer(scrollContainer: HTMLElement | null) {
 
 // w 对于 prop.items 只监听 id 变化
 watch(
-  [() => props.items.map((item) => item.id), () => safeColumns.value],
-  async ([_newItemIds]) => {
+  [
+    () => props.items.map((item) => item.id),
+    () => safeTargetRowHeight.value,
+    () => props.lastRowFill,
+  ],
+  async ([_newItems]) => {
     await nextTick();
     if (state.isFreeze) return;
     // items、gap 发生变化时重新计算布局
@@ -216,75 +194,139 @@ watch(
   },
 );
 
-const computedItemPosDebounce = useDebounceFn(async (list: Item[]) => {
+const computedItemPosDebounce = useDebounceFn((list: Item[]) => {
   requestAnimationFrame(async () => {
     await computedItemPos(list);
     computeVisibleStateRAF();
   });
 }, 100);
 
-// f 计算所有 item 位置 —— Masonry 瀑布流
+// f 计算所有 item 位置 —— Justified Layout (自适应布局：按照预期行高进行计算)
 async function computedItemPos(list: Item[]) {
   await nextTick();
   if (state.isFreeze) return;
 
-  const width = columnWidth.value;
+  const targetRowHeight = safeTargetRowHeight.value;
   const gap = safeGap.value;
-  const column = safeColumns.value;
+  // 控制最后一行是否也要强制铺满
+  const lastRowFill = props.lastRowFill;
 
-  // 每列当前累计高度
-  const colHeights = new Array(column).fill(0);
+  const containerWidth = state.wrapState.width || 0;
+  if (containerWidth <= 0) {
+    // 容器宽度未就绪，延后计算
+    state.itemsPos = new Array(list.length);
+    state.rowPosList = [];
+    state.wrapState.height = 0;
+    return;
+  }
 
+  // 用来存放每个 item 的 Pos
   const newPos: Pos[] = new Array(list.length);
 
-  // 记录每列位置数组
-  const columnPosList: Pos[][] = Array.from(
-    { length: column },
-    () => [] as Pos[],
-  );
+  // 临时行缓存，存的是 { item, index }
+  let currentRow: { item: Item; index: number }[] = [];
+  let currentRowAspectSum = 0;
+
+  let top = 0;
+  const rows: Pos[][] = [];
 
   for (let index = 0; index < list.length; index++) {
     const item = list[index];
+    currentRow.push({ item, index });
+    currentRowAspectSum += item.aspectRatio;
 
-    // 根据宽度和宽高比计算高度
-    const height = width / item.aspectRatio;
+    // 如果一行把这些元素强制拉满，得到的高度
+    const rowHeight =
+      (containerWidth - gap * (currentRow.length - 1)) / currentRowAspectSum;
 
-    // 找到当前最短列
-    let minCol = 0;
-    for (let c = 1; c < column; c++) {
-      if (colHeights[c] < colHeights[minCol]) {
-        minCol = c;
+    // 可调：当行高过低时（图片被压得太扁）提前换行
+    const shouldBreak = rowHeight < targetRowHeight && currentRow.length > 1;
+
+    if (shouldBreak) {
+      // 回退最后一个，先布局当前行
+      const last = currentRow.pop()!;
+      currentRowAspectSum -= last.item.aspectRatio;
+
+      layoutRow(currentRow, false);
+      // 新起一行，把被回退的项目放进新行
+      currentRow = [last];
+      currentRowAspectSum = last.item.aspectRatio;
+
+      // 如果这个被回退的项目恰好是最后一个元素，那么它在新行中，且循环即将结束，需要立即布局。
+      if (index === list.length - 1) {
+        layoutRow(currentRow, true);
       }
+    } else if (index === list.length - 1) {
+      // 最后一行，布局（可选择不铺满）
+      layoutRow(currentRow, true);
     }
-
-    // 定位：放入 minCol 列
-    const left = minCol * (width + gap);
-    const top = colHeights[minCol];
-
-    const pos: Pos = {
-      id: item.id,
-      realIndex: index,
-      left,
-      top,
-      width,
-      height,
-    };
-
-    newPos[index] = pos;
-
-    columnPosList[minCol].push(pos);
-
-    // 更新该列高度 (如果是排列最后一个则不需要加gap)
-    colHeights[minCol] += height + (index < list.length - 1 ? gap : 0);
   }
 
-  // 批量替换响应式
-  state.itemsPos = newPos;
-  state.columnPosList = columnPosList;
-  state.list = list;
+  function layoutRow(
+    rowItems: { item: Item; index: number }[],
+    isLastRow = false,
+  ) {
+    if (rowItems.length === 0) return;
 
-  // 整体高度 = 所有列高度中的最大值
-  state.wrapState.height = Math.max(...colHeights);
+    const aspectSum = rowItems.reduce((s, v) => s + v.item.aspectRatio, 0);
+    const gapsTotal = gap * (rowItems.length - 1);
+
+    let rowHeight: number;
+
+    // 非最后一行：必须完全铺满，不做 clamp
+    if (!isLastRow || lastRowFill) {
+      rowHeight = (containerWidth - gapsTotal) / aspectSum;
+    } else {
+      // 最后一行不铺满：使用 targetRowHeight + clamp
+      rowHeight = Math.min(
+        targetRowHeight * 1.5,
+        Math.max(targetRowHeight * 0.7, targetRowHeight),
+      );
+    }
+
+    // 初次按 rowHeight 计算宽度
+    let widths = rowItems.map((r) => rowHeight * r.item.aspectRatio);
+    let totalContentWidth = widths.reduce((s, w) => s + w, 0);
+
+    // 非最后一行 或 lastRowFill = true：必须再次缩放以填满
+    if (!isLastRow || lastRowFill) {
+      const scale = (containerWidth - gapsTotal) / totalContentWidth;
+      rowHeight *= scale;
+      widths = widths.map((w) => w * scale);
+    }
+
+    // 布局
+    let left = 0;
+    const rowPos: Pos[] = [];
+
+    for (let i = 0; i < rowItems.length; i++) {
+      const { item, index } = rowItems[i];
+      const width = widths[i];
+
+      const pos = {
+        id: item.id,
+        realIndex: index,
+        left,
+        top,
+        width,
+        height: rowHeight,
+      };
+
+      newPos[index] = pos;
+      rowPos.push(pos);
+      left += width + gap;
+    }
+
+    rows.push(rowPos);
+    top += rowHeight + gap;
+  }
+
+  // 写回状态（注意：我们复用 columnPosList 来存放“行列表”，以兼容你现有的可见性逻辑）
+  state.itemsPos = newPos;
+  state.rowPosList = rows;
+  state.list = list;
+  // wrap 总高度：若无 items 则为 0，否则最后 top 会多加一个 gap，需要减去
+  state.wrapState.height = rows.length > 0 ? top - gap : 0;
 }
 
 // 使用 rAF 封装
@@ -299,12 +341,11 @@ const computeVisibleStateRAF = () => {
   }
 };
 
-// f 计算可见可见状态
+// f 计算可见状态 —— 按行虚拟化
 function computeVisibleState() {
   const paddingTop = state.viewportState.paddingTop;
 
   let scrollY = Math.floor(state.scrollState.y);
-
   if (!!props.scrollContainer) {
     scrollY = scrollY > paddingTop ? scrollY - paddingTop : 0;
   }
@@ -313,28 +354,22 @@ function computeVisibleState() {
 
   const visiblePosList: Pos[] = [];
 
-  for (const col of state.columnPosList) {
-    if (col.length === 0) continue;
+  // ⚠️ columnPosList 现在存放的是“行”
+  for (const row of state.rowPosList) {
+    if (row.length === 0) continue;
 
-    // 找第一个可见项
-    let start = binarySearch(col, scrollY);
-    // 🔥回溯：向上回查所有可能与 scrollY 重叠的元素
-    while (start > 0 && col[start - 1].top + col[start - 1].height >= scrollY) {
-      start--;
+    const rowTop = row[0].top;
+    const rowHeight = row[0].height;
+    const rowBottom = rowTop + rowHeight;
+
+    // 这一整行是否与可视区域相交？
+    if (rowBottom < scrollY || rowTop > viewBottom) {
+      continue;
     }
 
-    // 找最后一个可见项
-    let end = binarySearch(col, viewBottom);
-
-    // 修正
-    if (start < 0) start = 0;
-    if (end >= col.length) end = col.length - 1;
-
-    for (let i = start; i <= end; i++) {
-      const pos = col[i];
-      if (pos.top + pos.height >= scrollY && pos.top <= viewBottom) {
-        visiblePosList.push(pos);
-      }
+    // 整行可见
+    for (const pos of row) {
+      visiblePosList.push(pos);
     }
   }
 
@@ -348,18 +383,6 @@ function computeVisibleState() {
   // 一次性同步到响应式状态
   state.visiblePosList = sortedPosList;
   state.visibleList = sortedDataList;
-}
-
-// f (辅助函数) 二分查找：返回第一个 top > value 的 index
-function binarySearch(list: Pos[], value: number) {
-  let low = 0,
-    high = list.length - 1;
-  while (low <= high) {
-    const mid = (low + high) >> 1;
-    if (list[mid].top < value) low = mid + 1;
-    else high = mid - 1;
-  }
-  return low;
 }
 
 /**
@@ -416,7 +439,7 @@ defineExpose({
 
 <style lang="scss" scoped>
 /* 容器 */
-.base-virtual-masonry {
+.base-virtual-justified {
   /* &__container {
 		} */
 
