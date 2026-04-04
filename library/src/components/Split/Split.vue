@@ -334,23 +334,25 @@ function handleTreggerDoubleClick(_e: MouseEvent) {
 </script>
 
 <style lang="scss" scoped>
-// 控制条宽度
-$resize-trigger-size: calc(v-bind("$props.resizeTriggerSize") * 1px);
-// 控制条热区扩展尺寸
-$resize-trigger-hot-area-extend: calc(
-  v-bind("$props.resizeTriggerHotAreaExtend") * 1px
-);
-// 控制条hover扩展尺寸
-$resize-trigger-hover-extend: calc(
-  v-bind("$props.resizeTriggerHoverExtend") * 1px
-);
-// 安全尺寸
-$safe-size: calc(
-  (v-bind("resizeTriggerMaxSize") * 1px) / 2 - $resize-trigger-size / 2
-);
+.base-split {
+  // 控制条宽度
+  --resize-trigger-size: calc(v-bind("$props.resizeTriggerSize") * 1px);
+  // 控制条热区扩展尺寸
+  --resize-trigger-hot-area-extend: calc(
+    v-bind("$props.resizeTriggerHotAreaExtend") * 1px
+  );
+  // 控制条hover扩展尺寸
+  --resize-trigger-hover-extend: calc(
+    v-bind("$props.resizeTriggerHoverExtend") * 1px
+  );
+  // 安全尺寸
+  --safe-size: calc(
+    (v-bind("resizeTriggerMaxSize") * 1px) / 2 - var(--resize-trigger-size) / 2
+  );
 
-$resize-color: v-bind("$props.resizeTriggerColor");
-$resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
+  --resize-color: v-bind("$props.resizeTriggerColor");
+  --resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
+}
 
 .base-split {
   box-sizing: border-box;
@@ -366,9 +368,9 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
     // ? first 区域样式
     & > &__first {
       flex: 0 0 calc(v-bind("pane1Size") * 1px);
-      min-inline-size: $safe-size;
+      min-inline-size: var(--safe-size);
       max-inline-size: calc(
-        100% - (v-bind("resizeTriggerMaxSize") * 1px) + $safe-size
+        100% - (v-bind("resizeTriggerMaxSize") * 1px) + var(--safe-size)
       );
       overflow: v-bind("$props.pane1Overflow");
     }
@@ -382,9 +384,9 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
     // 拖拽控制条
     & > &__resize {
       position: relative;
-      background-color: $resize-color;
+      background-color: var(--resize-color);
       // 分栏条宽度
-      flex-basis: $resize-trigger-size;
+      flex-basis: --resize-trigger-size;
       background-size: cover;
       background-position: center;
 
@@ -396,7 +398,7 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
         content: "";
         position: absolute;
         inset: 0;
-        width: $resize-trigger-size;
+        width: --resize-trigger-size;
         height: 100%;
         z-index: 1;
         transition:
@@ -412,8 +414,8 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
         position: absolute;
         top: 0;
         bottom: 0;
-        left: calc(-1 * $resize-trigger-hot-area-extend);
-        right: calc(-1 * $resize-trigger-hot-area-extend);
+        left: calc(-1 * var(--resize-trigger-hot-area-extend));
+        right: calc(-1 * var(--resize-trigger-hot-area-extend));
         z-index: 1;
       }
 
@@ -421,9 +423,11 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
       &:active::after {
         inset: 0;
         height: 100%;
-        width: calc($resize-trigger-size + ($resize-trigger-hover-extend * 2));
-        left: calc(-1 * $resize-trigger-hover-extend);
-        background-color: $resize-hover-color;
+        width: calc(
+          var(--resize-trigger-size) + (var(--resize-trigger-hover-extend) * 2)
+        );
+        left: calc(-1 * var(--resize-trigger-hover-extend));
+        background-color: var(--resize-hover-color);
       }
     }
 
@@ -435,7 +439,7 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
 
     &__vertical > &__resize {
       // 分栏条宽度
-      height: $resize-trigger-size;
+      height: var(--resize-trigger-size);
 
       // 鼠标悬浮和激活的样式
       cursor: n-resize;
@@ -443,13 +447,13 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
       // 拖拽控制条：视觉条
       &::after {
         width: 100%;
-        height: $resize-trigger-size;
+        height: var(--resize-trigger-size);
       }
 
       // 拖拽控制条：扩展控条热区
       &::before {
-        top: calc(-1 * $resize-trigger-hot-area-extend);
-        bottom: calc(-1 * $resize-trigger-hot-area-extend);
+        top: calc(-1 * var(--resize-trigger-hot-area-extend));
+        bottom: calc(-1 * var(--resize-trigger-hot-area-extend));
         left: 0;
         right: 0;
       }
@@ -457,8 +461,10 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
       &:hover::after,
       &:active::after {
         width: 100%;
-        height: calc($resize-trigger-size + $resize-trigger-hover-extend * 2);
-        top: calc(-1 * $resize-trigger-hover-extend);
+        height: calc(
+          var(--resize-trigger-size) + var(--resize-trigger-hover-extend) * 2
+        );
+        top: calc(-1 * var(--resize-trigger-hover-extend));
       }
     }
   }
