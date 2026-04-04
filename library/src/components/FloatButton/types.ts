@@ -1,4 +1,4 @@
-import type { TapEvent } from "@/hooks/useBaseTap";
+import type { TapEvent } from "@/hooks";
 import type { MaybeComputedElementRef } from "@vueuse/core";
 
 export interface FloatButtonProps {

@@ -13,8 +13,11 @@ declare module 'vue' {
   export interface GlobalComponents {
     Button: typeof import('./src/components/Button/Button.vue')['default']
     Flex: typeof import('./src/components/Flex/Flex.vue')['default']
+    FloatButton: typeof import('./src/components/FloatButton/FloatButton.vue')['default']
+    Frame: typeof import('./src/components/Window/Frame.vue')['default']
     Grid: typeof import('./src/components/Grid/Grid.vue')['default']
     HighlightText: typeof import('./src/components/HighlightText/HighlightText.vue')['default']
+    IconCarbonSoftwareResourceCluster: typeof import('~icons/carbon/software-resource-cluster')['default']
     IconIcRoundMinus: typeof import('~icons/ic/round-minus')['default']
     IconIcRoundPlus: typeof import('~icons/ic/round-plus')['default']
     IconMaterialSymbolsPlayCircle: typeof import('~icons/material-symbols/play-circle')['default']
@@ -31,8 +34,10 @@ declare module 'vue' {
     Split: typeof import('./src/components/Split/Split.vue')['default']
     TabPane: typeof import('./src/components/Tabs/TabPane.vue')['default']
     Tabs: typeof import('./src/components/Tabs/Tabs.vue')['default']
+    TitleBar: typeof import('./src/components/Window/TitleBar.vue')['default']
     Tree: typeof import('./src/components/VirtualTree/Tree.vue')['default']
     Video: typeof import('./src/components/Video/Video.vue')['default']
     VirtualMasonry: typeof import('./src/components/VirtualMasonry/VirtualMasonry.vue')['default']
+    Window: typeof import('./src/components/Window/Window.vue')['default']
   }
 }
