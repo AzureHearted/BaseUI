@@ -86,7 +86,7 @@ const state = reactive({
   isFreeze: false,
 });
 
-// 是否正在请求数据
+// j 是否正在请求数据
 const isRequesting = computed(() => {
   return state.data.some((node) => node.loading);
 });
@@ -155,22 +155,23 @@ async function init() {
 
   // ? 监听滚动容器的尺寸
   useResizeObserver(scrollContainerDOM.value, (entries) => {
-    if (state.isFreeze) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (state.isFreeze) return;
+        virtualState.viewport.height = entries[0].contentRect.height;
+        virtualState.viewport.scrollHeight = entries[0].target.scrollHeight;
 
-    virtualState.viewport.height = entries[0].contentRect.height;
-    virtualState.viewport.scrollHeight = entries[0].target.scrollHeight;
+        virtualState.viewport.paddingTop = Math.floor(
+          (wrapDOM.value?.getBoundingClientRect().y || 0) +
+            virtualState.scrollState.y -
+            (props.scrollContainer?.getBoundingClientRect().y || 0),
+        );
 
-    virtualState.viewport.paddingTop = Math.floor(
-      (wrapDOM.value?.getBoundingClientRect().y || 0) +
-        virtualState.scrollState.y -
-        (props.scrollContainer?.getBoundingClientRect().y || 0),
-    );
+        virtualState.wrapState.width = wrapDOM.value?.clientWidth || 0;
 
-    virtualState.wrapState.width = wrapDOM.value?.clientWidth || 0;
-
-    rebuildVirtualPos();
-    computeVisible();
-    computedItemPosDebounce();
+        computedItemPosDebounce();
+      });
+    });
   });
 
   // ? 初始化完成后立即执行一次布局计算
@@ -271,41 +272,41 @@ function computeVisible() {
 }
 
 // j 过滤后的节点id列表
-const filterKeys = computed<string[]>(() => {
-  const keyword = props.keywords?.trim().toLowerCase();
+// const filterKeys = computed<string[]>(() => {
+//   const keyword = props.keywords?.trim().toLowerCase();
 
-  // 1. 如果没有关键词，直接返回所有 ID
-  if (!keyword) {
-    // 注意：如果是 reactive Map，应该用 state.nodeMap.keys()
-    return allKeys.value;
-  }
+//   // 1. 如果没有关键词，直接返回所有 ID
+//   if (!keyword) {
+//     // 注意：如果是 reactive Map，应该用 state.nodeMap.keys()
+//     return allKeys.value;
+//   }
 
-  // 2. 使用 Set 来存储匹配到的节点及父节点 ID，防止重复
-  const matchedSet = new Set<string>();
+//   // 2. 使用 Set 来存储匹配到的节点及父节点 ID，防止重复
+//   const matchedSet = new Set<string>();
 
-  // 3. 遍历 nodeMap 的所有值进行搜索
-  for (const [_id, node] of state.nodeMap) {
-    // 判断当前节点是否符合搜索条件
-    if (node.label.toLowerCase().includes(keyword)) {
-      // 找到了匹配节点，开始向上溯源
-      let currentNode: TreeNodeItem | undefined = node;
+//   // 3. 遍历 nodeMap 的所有值进行搜索
+//   for (const [_id, node] of state.nodeMap) {
+//     // 判断当前节点是否符合搜索条件
+//     if (node.label.toLowerCase().includes(keyword)) {
+//       // 找到了匹配节点，开始向上溯源
+//       let currentNode: TreeNodeItem | undefined = node;
 
-      // 只要当前节点存在，且没被处理过，就加入集合并找它的爹
-      while (currentNode && !matchedSet.has(currentNode.id)) {
-        matchedSet.add(currentNode.id);
+//       // 只要当前节点存在，且没被处理过，就加入集合并找它的爹
+//       while (currentNode && !matchedSet.has(currentNode.id)) {
+//         matchedSet.add(currentNode.id);
 
-        // 通过 pid 从 nodeMap 快速定位父节点
-        if (currentNode.pid) {
-          currentNode = state.nodeMap.get(currentNode.pid);
-        } else {
-          break; // 已经到顶了
-        }
-      }
-    }
-  }
+//         // 通过 pid 从 nodeMap 快速定位父节点
+//         if (currentNode.pid) {
+//           currentNode = state.nodeMap.get(currentNode.pid);
+//         } else {
+//           break; // 已经到顶了
+//         }
+//       }
+//     }
+//   }
 
-  return Array.from(matchedSet);
-});
+//   return Array.from(matchedSet);
+// });
 
 // w 监听关键词变化
 watch(
@@ -1130,6 +1131,7 @@ defineExpose({
   &__wrapper {
     position: relative;
     width: 100%;
+    overflow-x: hidden;
   }
   &__node {
     position: absolute;
