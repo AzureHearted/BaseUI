@@ -49,7 +49,7 @@ import {
 
 import NodeLabel from "./NodeLabel.vue";
 
-import { useCustomDrag } from "@/hooks/useCustomDrag";
+import { useCustomDrag } from "@/hooks";
 import { treeSymbol } from "./symbol";
 import type { TreeNodeProps } from "./type";
 import type { TreeContext } from "./Tree.vue";
