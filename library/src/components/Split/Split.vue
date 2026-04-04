@@ -87,8 +87,9 @@ function parseSizeToNumber(size: string | number) {
 /**
  * 更新区域尺寸
  * @param baseSize 基准区域尺寸
+ * @param basePane 基准区域
  */
-function updateSize(baseSize: number) {
+function updateSize(baseSize: number, basePane: 1 | 2 | false | undefined) {
   const cSize = containerSize.value;
   let bSize = baseSize;
   if (bSize < baseMinSize.value) bSize = baseMinSize.value;
@@ -114,7 +115,7 @@ function updateSize(baseSize: number) {
     bSize = cSize - aSize;
   }
 
-  if (!props.basePane || props.basePane === 1) {
+  if (!basePane || basePane === 1) {
     // pane1 为基准的情况
     pane1Size.value = bSize;
     pane2Size.value = aSize;
@@ -133,7 +134,7 @@ watch(
     if (!pSize) return;
     const cSize = containerSize.value;
 
-    updateSize(pSize);
+    updateSize(pSize, props.basePane);
 
     // ? 更新百分比
     state.percentage = pane1Size.value / cSize;
@@ -213,7 +214,7 @@ function initSize() {
 
   let iSize = size.value ?? props.defaultSize;
 
-  updateSize(parseSizeToNumber(iSize));
+  updateSize(parseSizeToNumber(iSize), props.basePane);
 
   // ? 更新百分比
   state.percentage = pane1Size.value / containerSize.value;
@@ -243,12 +244,13 @@ function handleSplitScale() {
       !props.basePane || props.basePane === 1
         ? pane1Size.value
         : pane2Size.value,
+      props.basePane,
     );
     state.percentage = pane1Size.value / cSize;
     updateModel();
   } else {
     // 未指定固定pane的情况
-    updateSize(Math.round(cSize * state.percentage));
+    updateSize(Math.round(cSize * state.percentage), props.basePane);
     updateModel();
   }
 }
@@ -290,6 +292,7 @@ function handleTreggerMouseDown(e: MouseEvent) {
 
     updateSize(
       !props.basePane || props.basePane === 1 ? pane1EndSize : pane2EndSize,
+      props.basePane,
     );
 
     // ? 更新百分比
@@ -322,7 +325,7 @@ function handleTreggerMouseDown(e: MouseEvent) {
 function handleTreggerDoubleClick(_e: MouseEvent) {
   const cSize = containerSize.value;
 
-  updateSize(parseSizeToNumber(props.defaultSize));
+  updateSize(parseSizeToNumber(props.defaultSize), props.basePane);
 
   // ? 更新百分比
   state.percentage = pane1Size.value / cSize;
