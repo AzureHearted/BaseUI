@@ -1,5 +1,10 @@
 <template>
-  <div ref="containerRef" class="base-float-button" :style="[style, sizeStyle]">
+  <div
+    ref="containerRef"
+    class="base-float-button"
+    :class="{ 'base-float-button--dark': isDark }"
+    :style="[style, sizeStyle]"
+  >
     <div
       ref="mainButtonRef"
       class="base-float-button__base-button base-float-button__main-button"
@@ -40,6 +45,7 @@ import {
 import type { MaybeComputedElementRef } from "@vueuse/core";
 import {
   computed,
+  inject,
   onMounted,
   onUnmounted,
   reactive,
@@ -52,6 +58,8 @@ import type { ShallowRef, StyleValue } from "vue";
 import { vDoubleTap } from "@/hooks";
 
 import type { FloatButtonEmits, FloatButtonProps } from "./types";
+import { ThemeKey } from "@/theme";
+import { resolveIsDark } from "@/utils/theme";
 
 defineOptions({
   name: "BaseFloatButton",
@@ -73,6 +81,25 @@ const props = withDefaults(defineProps<FloatButtonProps>(), {
     right: 4,
     bottom: 4,
   }),
+});
+
+// 主题上下文注入
+const themeContext = inject(ThemeKey, null);
+
+// 主题模式
+const themeMode = computed(() => props.theme ?? "system");
+
+// 主题模式优先级：组件 prop > provider > system
+const isDark = computed(() => {
+  if (props.theme) {
+    return resolveIsDark(themeMode.value);
+  }
+
+  if (themeContext) {
+    return themeContext.isDark.value;
+  }
+
+  return resolveIsDark("system");
 });
 
 // 自定义事件
@@ -274,7 +301,9 @@ const extraVNode = computed(() => {
   touch-action: none;
 
   box-sizing: border-box;
+}
 
+.base-float-button {
   // 按钮大小
   --size: calc(v-bind("state.size") * 1px);
 
@@ -292,7 +321,7 @@ const extraVNode = computed(() => {
   --hover-color: rgba(30, 30, 30, 1);
 
   // 暗色调色
-  @media (prefers-color-scheme: dark) {
+  &--dark {
     --background-color: rgba(30, 30, 30, 0.65);
     --color: rgba(240, 240, 240, 0.9);
     --box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);

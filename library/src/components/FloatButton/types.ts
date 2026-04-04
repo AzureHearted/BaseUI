@@ -1,7 +1,9 @@
 import type { TapEvent } from "@/hooks";
+import type { ThemeMode } from "@/theme";
 import type { MaybeComputedElementRef } from "@vueuse/core";
 
 export interface FloatButtonProps {
+  theme: ThemeMode;
   /** 边界容器 (如果不传入则默认使用窗口尺寸)  */
   boundaryContainer?: MaybeComputedElementRef;
   /** 初始位置 (相对于右下角定位)

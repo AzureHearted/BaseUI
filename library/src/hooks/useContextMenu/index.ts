@@ -10,6 +10,8 @@ import {
 import type { ComputedRef, Ref } from "vue";
 import ContextMenu from "./ContextMenu.vue";
 import { unrefElement } from "@vueuse/core";
+import type { ThemeMode } from "@/theme";
+import type { ContextMenuOption } from "./types";
 
 // t 可能的 HTMLElement 类型
 type MaybeHTMLElementRef =
@@ -21,6 +23,7 @@ type MaybeHTMLElementRef =
 type BaseContextMenuOptions = {
   root?: MaybeHTMLElementRef;
   fontSize?: number;
+  theme?: ThemeMode;
 };
 
 /**
@@ -64,7 +67,10 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
     // 重新添加到root元素中
     rootDOM.value.appendChild(container);
     // 创建 Vue App 实例
-    menuApp = createApp(ContextMenu, { fontSize: options?.fontSize || 16 });
+    menuApp = createApp(ContextMenu, {
+      fontSize: options?.fontSize || 16,
+      theme: options?.theme,
+    });
     // 挂载组件i
     instance = menuApp.mount(container) as InstanceType<typeof ContextMenu>;
   }
@@ -89,7 +95,7 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
    */
   async function showContextMenu<T>(
     event: PointerEvent,
-    options: Array<MenuOption<T>>,
+    options: Array<ContextMenuOption<T>>,
   ) {
     try {
       // 调用组件实例内部的 showMenu 方法
