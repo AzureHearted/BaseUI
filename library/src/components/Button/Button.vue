@@ -56,7 +56,7 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<ButtonProps>(), {
-  type: "default",
+  type: "primary",
   round: false,
 });
 
@@ -142,12 +142,14 @@ button.base-button {
   --height: 34px;
   --padding-size: 14px;
   --icon-size: 18px;
+  --border-radius: 6px;
 
   &--tiny {
     --font-size: 12px;
     --height: 22px;
     --padding-size: 8px;
     --icon-size: 16px;
+    --border-radius: 4px;
   }
 
   &--small {
@@ -155,6 +157,7 @@ button.base-button {
     --height: 28px;
     --padding-size: 12px;
     --icon-size: 16px;
+    --border-radius: 5px;
   }
 
   &--large {
@@ -162,13 +165,14 @@ button.base-button {
     --height: 40px;
     --padding-size: 18px;
     --icon-size: 20px;
+    --border-radius: 8px;
   }
 }
 
 // 自定义样式
 button.base-button {
   position: relative;
-  border-radius: 3px;
+  border-radius: var(--border-radius);
   white-space: nowrap;
   text-align: center;
   color: getThemeColor(dark, text);
@@ -193,46 +197,64 @@ button.base-button {
   justify-content: center;
   flex-wrap: nowrap;
 
-  &--default {
-    color: getThemeColor(light, text);
-    // background-color: transparent;
-    background-color: getThemeColor(light, default);
-    border: 1px solid getThemeColor(light, text);
-    &:hover:not([disabled]) {
-      background-color: getThemeColor(light, default-hover);
-    }
-  }
-
   &--primary {
+    color: getThemeColor(light, primary-text);
     background-color: getThemeColor(light, primary);
+    border: 1px solid getThemeColor(light, primary);
     &:hover:not([disabled]) {
       background-color: getThemeColor(light, primary-hover);
     }
   }
 
+  &--secondary {
+    color: getThemeColor(light, secondary-text);
+    background-color: getThemeColor(light, secondary);
+    border: 1px solid getThemeColor(light, secondary);
+    &:hover:not([disabled]) {
+      background-color: getThemeColor(light, secondary-hover);
+    }
+  }
+
   &--success {
+    color: getThemeColor(light, success-text);
     background-color: getThemeColor(light, success);
+    border: 1px solid getThemeColor(light, success);
     &:hover:not([disabled]) {
       background-color: getThemeColor(light, success-hover);
     }
   }
 
   &--info {
+    color: getThemeColor(light, info-text);
     background-color: getThemeColor(light, info);
+    border: 1px solid getThemeColor(light, info);
     &:hover:not([disabled]) {
       background-color: getThemeColor(light, info-hover);
     }
   }
 
+  &--help {
+    color: getThemeColor(light, help-text);
+    background-color: getThemeColor(light, help);
+    border: 1px solid getThemeColor(light, help);
+    &:hover:not([disabled]) {
+      background-color: getThemeColor(light, help-hover);
+    }
+  }
+
   &--warning {
+    color: getThemeColor(light, warning-text);
     background-color: getThemeColor(light, warning);
+    border: 1px solid getThemeColor(light, warning);
     &:hover:not([disabled]) {
       background-color: getThemeColor(light, warning-hover);
     }
   }
 
   &--danger {
-    background-color: getThemeColor(light, danger-hover);
+    color: getThemeColor(light, danger-text);
+    background-color: getThemeColor(light, danger);
+    border: 1px solid getThemeColor(light, danger);
     &:hover:not([disabled]) {
       background-color: getThemeColor(light, danger-hover);
     }
@@ -313,45 +335,73 @@ button.base-button {
 
 // 暗色主题
 button.base-button--dark.base-button {
-  &--default {
-    color: getThemeColor(dark, text);
-    border: 1px solid getThemeColor(dark, text);
-    background-color: getThemeColor(dark, default);
-    &:hover:not([disabled]) {
-      background-color: getThemeColor(dark, default-hover);
-    }
-  }
+  // &--default {
+  //   color: getThemeColor(dark, text);
+  //   border: 1px solid getThemeColor(dark, text);
+  //   background-color: getThemeColor(dark, default);
+  //   &:hover:not([disabled]) {
+  //     background-color: getThemeColor(dark, default-hover);
+  //   }
+  // }
 
   &--primary {
+    color: getThemeColor(dark, primary-text);
     background-color: getThemeColor(dark, primary);
+    border: 1px solid getThemeColor(dark, primary);
     &:hover:not([disabled]) {
       background-color: getThemeColor(dark, primary-hover);
     }
   }
 
+  &--secondary {
+    color: getThemeColor(dark, secondary-text);
+    background-color: getThemeColor(dark, secondary);
+    border: 1px solid getThemeColor(dark, secondary);
+    &:hover:not([disabled]) {
+      background-color: getThemeColor(dark, secondary-hover);
+    }
+  }
+
   &--success {
+    color: getThemeColor(dark, success-text);
     background-color: getThemeColor(dark, success);
+    border: 1px solid getThemeColor(dark, success);
     &:hover:not([disabled]) {
       background-color: getThemeColor(dark, success-hover);
     }
   }
 
   &--info {
+    color: getThemeColor(dark, info-text);
     background-color: getThemeColor(dark, info);
+    border: 1px solid getThemeColor(dark, info);
     &:hover:not([disabled]) {
       background-color: getThemeColor(dark, info-hover);
     }
   }
 
+  &--help {
+    color: getThemeColor(dark, help-text);
+    background-color: getThemeColor(dark, help);
+    border: 1px solid getThemeColor(dark, help);
+    &:hover:not([disabled]) {
+      background-color: getThemeColor(dark, help-hover);
+    }
+  }
+
   &--warning {
+    color: getThemeColor(dark, warning-text);
     background-color: getThemeColor(dark, warning);
+    border: 1px solid getThemeColor(dark, warning);
     &:hover:not([disabled]) {
       background-color: getThemeColor(dark, warning-hover);
     }
   }
 
   &--danger {
+    color: getThemeColor(dark, danger-text);
     background-color: getThemeColor(dark, danger);
+    border: 1px solid getThemeColor(dark, danger);
     &:hover:not([disabled]) {
       background-color: getThemeColor(dark, danger-hover);
     }

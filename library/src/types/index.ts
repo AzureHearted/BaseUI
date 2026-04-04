@@ -1,9 +1,10 @@
 export type SizeType = "small" | "medium" | "large" | "tiny";
 
 export type ColorType =
-  | "default"
   | "primary"
+  | "secondary"
   | "success"
   | "warning"
   | "danger"
-  | "info";
+  | "info"
+  | "help";
