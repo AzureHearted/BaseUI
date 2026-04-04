@@ -438,6 +438,7 @@ const vLazy: Directive = {
 
 .base-video {
   &__wrapper {
+    position: relative;
     & > video {
       // 默认不显示
       opacity: 0;
