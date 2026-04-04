@@ -4,7 +4,7 @@
     ref="containerRef"
     class="base-split"
     :class="{
-      [`base-split__${safeOrientation}`]: safeOrientation,
+      [`base-split__vertical`]: vertical,
     }"
   >
     <!-- first区域 -->
@@ -92,7 +92,8 @@ function updateSize(baseSize: number) {
   const cSize = containerSize.value;
   let bSize = baseSize;
   if (bSize < baseMinSize.value) bSize = baseMinSize.value;
-  if (bSize > baseMaxSize.value) bSize = baseMaxSize.value;
+  if (bSize > baseMaxSize.value - props.resizeTriggerSize)
+    bSize = baseMaxSize.value - props.resizeTriggerSize;
   let aSize = cSize - bSize;
   // 当空间足够时，对非基准区域的尺寸进行判断
   if (
@@ -148,11 +149,6 @@ const state = reactive({
 
 const pane1Size = ref<number>(0);
 const pane2Size = ref<number>(0);
-
-// j 布局方向 (通过props安全的获取)
-const safeOrientation = computed(() => {
-  return props.vertical ? "vertical" : "horizontal";
-});
 
 // j 控制条最大尺寸(含不可见尺寸)
 const resizeTriggerMaxSize = computed(() => {
@@ -352,46 +348,52 @@ $safe-size: calc(
   (v-bind("resizeTriggerMaxSize") * 1px) / 2 - $resize-trigger-size / 2
 );
 
+$resize-color: v-bind("$props.resizeTriggerColor");
+$resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
+
 .base-split {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
   display: flex;
 
-  $resize-color: v-bind("$props.resizeTriggerColor");
-  $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
+  // &__first,
+  // &__second {
+  // 	position: relative;
+  // }
 
-  &__first,
-  &__second {
-    position: relative;
-  }
-
-  // 水平分栏布局
-  &__horizontal {
+  // * 水平布局
+  & {
     flex-direction: row;
     flex-wrap: nowrap;
 
     // ? first 区域样式
-    & > .base-split__first {
-      // flex-shrink: 0;
+    & > &__first {
       flex: 0 0 calc(v-bind("pane1Size") * 1px);
-      min-width: $safe-size;
-      max-width: calc(
+      min-inline-size: $safe-size;
+      max-inline-size: calc(
         100% - (v-bind("resizeTriggerMaxSize") * 1px) + $safe-size
       );
-      height: 100%;
       overflow: v-bind("$props.pane1Overflow");
-      // background-color: rgba(0, 0, 0, 0.516);
+    }
+
+    // ? second 区域样式
+    & > &__second {
+      flex: 1;
+      overflow: v-bind("$props.pane2Overflow");
     }
 
     // 拖拽控制条
-    & > .base-split__resize {
+    & > &__resize {
       position: relative;
       background-color: $resize-color;
       // 分栏条宽度
-      width: $resize-trigger-size;
+      flex-basis: $resize-trigger-size;
       background-size: cover;
       background-position: center;
+
+      // 鼠标悬浮和激活的样式
+      cursor: e-resize;
 
       // 拖拽控制条：视觉条
       &::after {
@@ -416,13 +418,9 @@ $safe-size: calc(
         bottom: 0;
         left: calc(-1 * $resize-trigger-hot-area-extend);
         right: calc(-1 * $resize-trigger-hot-area-extend);
-        // 不要设置背景，保持透明！
-        // background-color: rgba(255, 0, 0, 0.482);
         z-index: 1;
       }
 
-      // 鼠标悬浮和激活的样式
-      cursor: e-resize;
       &:hover::after,
       &:active::after {
         inset: 0;
@@ -433,84 +431,39 @@ $safe-size: calc(
       }
     }
 
-    // ? second 区域样式
-    & > .base-split__second {
-      flex: 1;
-      height: 100%;
-      overflow: v-bind("$props.pane2Overflow");
-      // background-color: rgba(0, 0, 0, 0.516);
-    }
-  }
-
-  // 垂直分栏布局
-  &__vertical {
-    flex-flow: column nowrap;
-
-    // ? first 区域样式
-    & > .base-split__first {
-      height: calc(v-bind("pane1Size") * 1px);
-      min-height: $safe-size;
-      max-height: calc(
-        100% - (v-bind("resizeTriggerMaxSize") * 1px) + $safe-size
-      );
-      width: 100%;
-      overflow: v-bind("$props.pane1Overflow");
+    // * 垂直布局
+    &__vertical {
+      flex-direction: column;
+      flex-wrap: nowrap;
     }
 
-    // 拖拽控制条
-    & > .base-split__resize {
-      flex-shrink: 0;
-      position: relative;
-      background-color: $resize-color;
+    &__vertical > &__resize {
       // 分栏条宽度
       height: $resize-trigger-size;
-      background-size: cover;
-      background-position: center;
+
+      // 鼠标悬浮和激活的样式
+      cursor: n-resize;
 
       // 拖拽控制条：视觉条
       &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
         width: 100%;
         height: $resize-trigger-size;
-        transition:
-          height 0.15s,
-          top 0.15s,
-          background-color 0.15s,
-          inset 0.15s;
       }
 
       // 拖拽控制条：扩展控条热区
       &::before {
-        content: "";
-        position: absolute;
         top: calc(-1 * $resize-trigger-hot-area-extend);
         bottom: calc(-1 * $resize-trigger-hot-area-extend);
         left: 0;
         right: 0;
-        // 不要设置背景，保持透明！
-        // background-color: rgba(255, 0, 0, 0.482);
-        z-index: 1;
       }
 
-      // 鼠标悬浮和激活的样式
-      cursor: n-resize;
       &:hover::after,
       &:active::after {
-        inset: 0;
         width: 100%;
         height: calc($resize-trigger-size + $resize-trigger-hover-extend * 2);
         top: calc(-1 * $resize-trigger-hover-extend);
-        background-color: $resize-hover-color;
       }
-    }
-
-    // ? second 区域样式
-    & > .base-split__second {
-      flex: 1;
-      width: 100%;
-      overflow: v-bind("$props.pane2Overflow");
     }
   }
 }
