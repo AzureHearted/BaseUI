@@ -78,7 +78,7 @@ const size = defineModel<number | string>("size");
 // f 计算size值
 function parseSizeToNumber(size: string | number) {
   if (typeof size === "number") {
-    return Math.floor(containerSize.value * size);
+    return containerSize.value * size;
   } else {
     return parseInt(size);
   }
@@ -93,8 +93,7 @@ function updateSize(baseSize: number, basePane: 1 | 2 | false | undefined) {
   const cSize = containerSize.value;
   let bSize = baseSize;
   if (bSize < baseMinSize.value) bSize = baseMinSize.value;
-  if (bSize > baseMaxSize.value - props.resizeTriggerSize)
-    bSize = baseMaxSize.value - props.resizeTriggerSize;
+  if (bSize > baseMaxSize.value) bSize = baseMaxSize.value;
   let aSize = cSize - bSize;
   // 当空间足够时，对非基准区域的尺寸进行判断
   if (
@@ -131,7 +130,7 @@ watch(
   (value, oldValue) => {
     if (value === oldValue) return;
     const pSize = value != null ? parseSizeToNumber(value) : null;
-    if (!pSize) return;
+    if (pSize == null) return;
     const cSize = containerSize.value;
 
     updateSize(pSize, props.basePane);
@@ -358,11 +357,6 @@ $resize-hover-color: v-bind("$props.resizeTriggerHoverColor");
   width: 100%;
   height: 100%;
   display: flex;
-
-  // &__first,
-  // &__second {
-  // 	position: relative;
-  // }
 
   // * 水平布局
   & {
