@@ -1131,7 +1131,7 @@ defineExpose({
   &__wrapper {
     position: relative;
     width: 100%;
-    overflow-x: hidden;
+    overflow: hidden;
   }
   &__node {
     position: absolute;
