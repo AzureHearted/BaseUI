@@ -1,5 +1,5 @@
 <template>
-  <BaseFlex :gap="16" wrap="wrap">
+  <BaseFlex :gap="16" wrap>
     <BaseFlex class="card" direction="column" :gap="8">
       <BaseInput
         v-model="state.value"

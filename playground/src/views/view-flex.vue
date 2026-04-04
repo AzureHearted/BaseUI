@@ -1,5 +1,5 @@
 <template>
-  <BaseFlex wrap="wrap" :gap="4">
+  <BaseFlex wrap :gap="4">
     <BaseFlex v-for="i in 10" class="box" align="center" justify="center">
       {{ i }}
     </BaseFlex>

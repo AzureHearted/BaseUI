@@ -1,6 +1,6 @@
 <template>
   <BaseFlex direction="column" :gap="4">
-    <BaseFlex :gap="4" align="center" wrap="wrap">
+    <BaseFlex :gap="4" align="center" wrap>
       <BaseButton> default </BaseButton>
       <BaseButton type="primary"> primary </BaseButton>
       <BaseButton type="success"> success </BaseButton>
@@ -8,19 +8,19 @@
       <BaseButton type="warning"> warning </BaseButton>
       <BaseButton type="danger"> danger </BaseButton>
     </BaseFlex>
-    <BaseFlex :gap="4" align="center" wrap="wrap">
+    <BaseFlex :gap="4" align="center" wrap>
       <BaseButton size="tiny">尺寸：tiny</BaseButton>
       <BaseButton size="small">尺寸：small</BaseButton>
       <BaseButton size="medium">尺寸：medium</BaseButton>
       <BaseButton size="large">尺寸：large</BaseButton>
     </BaseFlex>
-    <BaseFlex :gap="4" align="center" wrap="wrap">
+    <BaseFlex :gap="4" align="center" wrap>
       <BaseButton round size="tiny">圆角</BaseButton>
       <BaseButton round size="small">圆角</BaseButton>
       <BaseButton round size="medium">圆角</BaseButton>
       <BaseButton round size="large">圆角</BaseButton>
     </BaseFlex>
-    <BaseFlex :gap="4" align="center" wrap="wrap">
+    <BaseFlex :gap="4" align="center" wrap>
       <BaseButton disabled>禁用</BaseButton>
       <BaseButton disabled type="primary">禁用</BaseButton>
       <BaseButton disabled type="success">禁用</BaseButton>
@@ -28,7 +28,7 @@
       <BaseButton disabled type="warning">禁用</BaseButton>
       <BaseButton disabled type="danger">禁用</BaseButton>
     </BaseFlex>
-    <BaseFlex :gap="4" align="center" wrap="wrap">
+    <BaseFlex :gap="4" align="center" wrap>
       <BaseButton
         :loading="state.loading"
         loading-type="warning"

@@ -1,7 +1,7 @@
 <template>
   <BaseSplit orientation="vertical">
     <template #1>
-      <BaseFlex :gap="16" wrap="wrap" style="padding: 16px">
+      <BaseFlex :gap="16" wrap style="padding: 16px">
         <BaseFlex style="width: 200px; flex-shrink: 0">
           <label>
             控制条 first 区域占比:

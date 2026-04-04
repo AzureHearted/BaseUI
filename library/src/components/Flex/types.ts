@@ -7,8 +7,8 @@ export interface FlexProps {
   justify?: Property.JustifyContent;
   /** Flex 布局交叉轴对齐方式 */
   align?: Property.AlignItems;
-  /** Flex 布局换行  */
-  wrap?: Property.FlexWrap;
+  /** Flex 允许换行  */
+  wrap?: boolean;
   /** Flex 布局子元素的间距 */
   gap?: number;
 }
