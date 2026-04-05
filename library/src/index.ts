@@ -13,6 +13,9 @@ export * from "./components/Split";
 // 滚动条组件
 export * from "./components/Scrollbar";
 
+// 返回顶部组件
+export * from "./components/BackToTop";
+
 // 按钮
 export * from "./components/Button";
 
@@ -28,8 +31,14 @@ export * from "./components/InputNumber";
 // 标签页
 export * from "./components/Tabs";
 
-// 瀑布流组件
+// 虚拟网格布局组件
+export * from "./components/VirtualGrid";
+
+// 虚拟瀑布流组件
 export * from "./components/VirtualMasonry";
+
+// 虚拟自适应布局组件
+export * from "./components/VirtualJustified";
 
 // 图片组件
 export * from "./components/Img";

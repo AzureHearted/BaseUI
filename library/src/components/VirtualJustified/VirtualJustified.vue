@@ -3,8 +3,8 @@
     ref="containerDOM"
     class="base-virtual-justified__container"
     :style="{
-      height: !scrollContainer ? '100%' : '',
-      overflow: !scrollContainer ? 'hidden auto' : '',
+      height: scrollContainerDOM != null ? '100%' : '',
+      overflow: scrollContainerDOM != null ? 'hidden auto' : '',
     }"
   >
     <!-- 包裹容器 -->
@@ -43,6 +43,7 @@
         </div>
       </template>
     </div>
+    <base-back-to-top :scroll-container="scrollContainerDOM" />
   </div>
 </template>
 
@@ -62,6 +63,7 @@ import {
 import type { Item, Pos, VirtualJustifiedProps } from "./type";
 
 import { useDebounceFn, useResizeObserver, useScroll } from "@vueuse/core";
+import { BaseBackToTop } from "../BackToTop";
 
 defineOptions({
   name: "BaseVirtualJustified",
