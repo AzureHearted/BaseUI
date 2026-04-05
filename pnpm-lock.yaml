@@ -38,6 +38,9 @@ importers:
       hammerjs:
         specifier: ^2.0.8
         version: 2.0.8
+      lodash:
+        specifier: ^4.18.1
+        version: 4.18.1
       vue:
         specifier: ^3.5.31
         version: 3.5.31(typescript@5.3.3)
@@ -60,6 +63,9 @@ importers:
       '@types/hammerjs':
         specifier: ^2.0.46
         version: 2.0.46
+      '@types/lodash':
+        specifier: ^4.17.24
+        version: 4.17.24
       '@vitejs/plugin-vue':
         specifier: ^6.0.0
         version: 6.0.5(vite@7.3.1)(vue@3.5.31)
@@ -1249,6 +1255,10 @@ packages:
 
   /@types/json-schema@7.0.15:
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+    dev: true
+
+  /@types/lodash@4.17.24:
+    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
     dev: true
 
   /@types/mdast@3.0.15:
@@ -3640,6 +3650,10 @@ packages:
   /lodash@4.17.23:
     resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
     dev: true
+
+  /lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
+    dev: false
 
   /lru-cache@6.0.0:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}

@@ -30,14 +30,15 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
+    dedupe: ["vue"], // ⭐ 核心
   },
   css: {
     // 预处理器配置项
     preprocessorOptions: {
       scss: {
         additionalData: `
-					@use "@/styles/themes/main.scss" as *;
-				`,
+            @use "@/styles/themes/main.scss" as *;
+          `,
       },
     },
   },
@@ -48,7 +49,7 @@ export default defineConfig({
       formats: ["es"],
     },
     rollupOptions: {
-      external: ["vue"],
+      external: ["vue", "@vueuse/core", "hammerjs", "lodash"],
       output: {
         globals: {
           vue: "Vue",

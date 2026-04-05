@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    BackToTop: typeof import('./src/components/BackToTop/BackToTop.vue')['default']
     Button: typeof import('./src/components/Button/Button.vue')['default']
     Flex: typeof import('./src/components/Flex/Flex.vue')['default']
     FloatButton: typeof import('./src/components/FloatButton/FloatButton.vue')['default']
@@ -37,6 +38,8 @@ declare module 'vue' {
     TitleBar: typeof import('./src/components/Window/TitleBar.vue')['default']
     Tree: typeof import('./src/components/VirtualTree/Tree.vue')['default']
     Video: typeof import('./src/components/Video/Video.vue')['default']
+    VirtualGrid: typeof import('./src/components/VirtualGrid/VirtualGrid.vue')['default']
+    VirtualJustified: typeof import('./src/components/VirtualJustified/VirtualJustified.vue')['default']
     VirtualMasonry: typeof import('./src/components/VirtualMasonry/VirtualMasonry.vue')['default']
     Window: typeof import('./src/components/Window/Window.vue')['default']
   }
