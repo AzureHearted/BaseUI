@@ -76,8 +76,6 @@ async function init() {
   // ? 组件挂载后重新绑定滚动容器 (因为挂载前可能传入scrollContainer还未挂载)
   bindingScrollContainer(scrollContainerDOM.value);
 
-  console.log("base-back-to-top 初始化", scrollContainerDOM.value);
-
   // ? 如果滚动容器变化时则需要重新绑定监听
   watch(scrollContainerDOM, (dom, oldDOM) => {
     if (dom === oldDOM) return;
@@ -91,13 +89,7 @@ async function init() {
 
 // f 绑定滚动容器
 function bindingScrollContainer(scrollContainer: HTMLElement | null) {
-  state.scrollState = reactive(
-    useScroll(scrollContainer, {
-      onScroll(e) {
-        console.log("滚动中");
-      },
-    }),
-  );
+  state.scrollState = reactive(useScroll(scrollContainer));
 }
 
 // f 执行回到顶部
