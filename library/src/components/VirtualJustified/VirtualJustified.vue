@@ -34,6 +34,9 @@
             v-bind="{
               item,
               index: state.visiblePosList[index].realIndex,
+              isSkeleton:
+                state.visibleStateMap.get(state.visiblePosList[index].id) !==
+                'item',
             }"
           >
           </slot>
@@ -84,6 +87,7 @@ const state = reactive({
   visibleList: [] as Item[], // 可见的item列表
   itemsPos: [] as Pos[], // 所有item的位置信息列表
   visiblePosList: [] as Pos[], // 可见item的位置信息列表
+  visibleStateMap: new Map<string, "item" | "skeleton">(), // 可见类型状态映射
   rowPosList: [] as Pos[][], // 每一行的 item 位置信息
   isFreeze: false, // 冻结标识符
   viewportState: {
@@ -167,13 +171,22 @@ async function init() {
   computedItemPosDebounce(props.items);
 }
 
+let timer: number;
 // f 绑定滚动容器
 function bindingScrollContainer(scrollContainer: HTMLElement | null) {
   state.scrollState = reactive(
     useScroll(scrollContainer, {
       onScroll(_e) {
         if (state.isFreeze) return;
-        computedItemPosDebounce(props.items);
+        computeVisibleStateRAF(true);
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          clearTimeout(timer);
+          if (state.scrollState.isScrolling) {
+            return;
+          }
+          computeVisibleStateRAF();
+        }, 300);
       },
     }),
   );
@@ -195,8 +208,8 @@ watch(
 );
 
 const computedItemPosDebounce = useDebounceFn((list: Item[]) => {
-  requestAnimationFrame(async () => {
-    await computedItemPos(list);
+  requestAnimationFrame(() => {
+    computedItemPos(list);
     computeVisibleStateRAF();
   });
 }, 100);
@@ -331,10 +344,10 @@ async function computedItemPos(list: Item[]) {
 
 // 使用 rAF 封装
 let ticking = false;
-const computeVisibleStateRAF = () => {
+const computeVisibleStateRAF = (isScrolling: boolean = false) => {
   if (!ticking) {
     requestAnimationFrame(() => {
-      computeVisibleState();
+      computeVisibleState(isScrolling);
       ticking = false;
     });
     ticking = true;
@@ -342,7 +355,7 @@ const computeVisibleStateRAF = () => {
 };
 
 // f 计算可见状态 —— 按行虚拟化
-function computeVisibleState() {
+function computeVisibleState(isScrolling: boolean = false) {
   const paddingTop = state.viewportState.paddingTop;
 
   let scrollY = Math.floor(state.scrollState.y);
@@ -350,9 +363,12 @@ function computeVisibleState() {
     scrollY = scrollY > paddingTop ? scrollY - paddingTop : 0;
   }
 
-  const viewBottom = scrollY + state.viewportState.height;
+  const viewTop = scrollY;
+  const viewBottom = viewTop + state.viewportState.height;
 
   const visiblePosList: Pos[] = [];
+
+  if (!isScrolling) state.visibleStateMap.clear();
 
   // ⚠️ columnPosList 现在存放的是“行”
   for (const row of state.rowPosList) {
@@ -363,20 +379,32 @@ function computeVisibleState() {
     const rowBottom = rowTop + rowHeight;
 
     // 这一整行是否与可视区域相交？
-    if (rowBottom < scrollY || rowTop > viewBottom) {
+    if (rowBottom < viewTop || rowTop > viewBottom) {
       continue;
     }
 
     // 整行可见
     for (const pos of row) {
-      visiblePosList.push(pos);
+      if (isScrolling) {
+        const oldState = state.visibleStateMap.get(pos.id);
+        state.visibleStateMap.set(pos.id, oldState ?? "skeleton");
+      } else {
+        if (pos.top + pos.height >= viewTop && pos.top <= viewBottom) {
+          // pos.type = "item";
+          state.visibleStateMap.set(pos.id, "item");
+        } else {
+          // 针对不可见项的设置
+          // pos.type = "skeleton";
+          state.visibleStateMap.set(pos.id, "skeleton");
+        }
+      }
+
+      visiblePosList[pos.realIndex] = pos;
     }
   }
 
   // 按照真实索引排序
-  const sortedPosList = [...visiblePosList].sort(
-    (a, b) => a.realIndex - b.realIndex,
-  );
+  const sortedPosList = visiblePosList.filter(Boolean);
   // 按照真实索引排序后的数据
   const sortedDataList = sortedPosList.map((p) => state.list[p.realIndex]);
 
@@ -440,9 +468,11 @@ defineExpose({
 <style lang="scss" scoped>
 /* 容器 */
 .base-virtual-justified {
-  /* &__container {
-		} */
-
+  &__container {
+    // 自定义滚动条颜色
+    scrollbar-color: rgb(85, 170, 255) transparent;
+    scrollbar-gutter: stable;
+  }
   &__wrap {
     position: relative;
     width: 100%;

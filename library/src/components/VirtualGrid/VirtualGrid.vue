@@ -33,6 +33,9 @@
             v-bind="{
               item,
               index: state.visiblePosList[index].realIndex,
+              isSkeleton:
+                state.visibleStateMap.get(state.visiblePosList[index].id) !==
+                'item',
             }"
           >
           </slot>
@@ -82,6 +85,7 @@ const state = reactive({
   visibleList: [] as Item[], // 可见的item列表
   itemsPos: [] as Pos[], // 所有item的位置信息列表
   visiblePosList: [] as Pos[], // 可见item的位置信息列表
+  visibleStateMap: new Map<string, "item" | "skeleton">(), // 可见类型状态映射
   isFreeze: false,
   viewportState: {
     width: 0,
@@ -192,13 +196,22 @@ async function init() {
   computedItemPosDebounce(props.items);
 }
 
+let timer: number;
 // f 绑定滚动容器
 function bindingScrollContainer(scrollContainer: HTMLElement | null) {
   state.scrollState = reactive(
     useScroll(scrollContainer, {
       onScroll(_e) {
         if (state.isFreeze) return;
-        computedItemPosDebounce(props.items);
+        computeVisibleStateRAF(true);
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          clearTimeout(timer);
+          if (state.scrollState.isScrolling) {
+            return;
+          }
+          computeVisibleStateRAF();
+        }, 300);
       },
     }),
   );
@@ -216,8 +229,8 @@ watch(
 );
 
 const computedItemPosDebounce = useDebounceFn((list: Item[]) => {
-  requestAnimationFrame(async () => {
-    await computedItemPos(list);
+  requestAnimationFrame(() => {
+    computedItemPos(list);
     computeVisibleStateRAF();
   });
 }, 100);
@@ -259,10 +272,10 @@ async function computedItemPos(list: Item[]) {
 
 // 使用 rAF 封装
 let ticking = false;
-const computeVisibleStateRAF = () => {
+const computeVisibleStateRAF = (isScrolling: boolean = false) => {
   if (!ticking) {
     requestAnimationFrame(() => {
-      computeVisibleState();
+      computeVisibleState(isScrolling);
       ticking = false;
     });
     ticking = true;
@@ -270,12 +283,15 @@ const computeVisibleStateRAF = () => {
 };
 
 // f 计算可见可见状态
-function computeVisibleState() {
+function computeVisibleState(isScrolling: boolean = false) {
   if (state.isFreeze) return;
+
   const itemHeight = columnWidth.value;
   const gap = safeGap.value;
   const h = itemHeight + gap;
   const cols = safeColumns.value;
+
+  const bufferCount = 1; // 缓冲区个数
 
   // 计算paddingTop
   const paddingTop = state.viewportState.paddingTop;
@@ -285,14 +301,42 @@ function computeVisibleState() {
     scrollY = scrollY > paddingTop ? scrollY - paddingTop : 0;
   }
 
-  const startRow = Math.floor(scrollY / h);
-  const endRow = Math.floor((scrollY + state.viewportState.height) / h);
+  const viewTop = scrollY;
+  const viewBottom = scrollY + state.viewportState.height;
 
-  const startIndex = startRow * cols;
+  // 可见行区域
+  const visibleStartRow = Math.floor(viewTop / h);
+  const visibleEndRow = Math.floor(viewBottom / h);
+
+  // 总共要显示的区域
+  const startRow = visibleStartRow - bufferCount;
+  const endRow = visibleEndRow + bufferCount;
+
+  const startIndex = Math.max(startRow * cols, 0);
   const endIndex = Math.min((endRow + 1) * cols - 1, state.list.length - 1);
 
-  state.visibleList = state.list.slice(startIndex, endIndex + 1);
-  state.visiblePosList = state.itemsPos.slice(startIndex, endIndex + 1);
+  const visiblePosList = state.itemsPos.slice(startIndex, endIndex + 1);
+  const visibleList = state.list.slice(startIndex, endIndex + 1);
+
+  if (!isScrolling) state.visibleStateMap.clear();
+
+  // 遍历所有可见区域记录状态
+  visiblePosList.forEach((pos) => {
+    if (isScrolling) {
+      const oldState = state.visibleStateMap.get(pos.id);
+      state.visibleStateMap.set(pos.id, oldState ?? "skeleton");
+    } else {
+      if (pos.top + pos.height >= scrollY && pos.top <= viewBottom) {
+        state.visibleStateMap.set(pos.id, "item");
+      } else {
+        // 针对不可见项的设置
+        state.visibleStateMap.set(pos.id, "skeleton");
+      }
+    }
+  });
+
+  state.visiblePosList = visiblePosList;
+  state.visibleList = visibleList;
 }
 
 /**
@@ -350,9 +394,11 @@ defineExpose({
 <style lang="scss" scoped>
 /* 容器 */
 .base-virtual-grid {
-  /* &__container {
-			border: 1px solid rgb(123, 123, 123);
-		} */
+  &__container {
+    // 自定义滚动条颜色
+    scrollbar-color: rgb(85, 170, 255) transparent;
+    scrollbar-gutter: stable;
+  }
 
   &__wrap {
     position: relative;
