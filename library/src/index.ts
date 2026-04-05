@@ -52,6 +52,12 @@ export * from "./components/VirtualTree";
 // 高亮文本
 export * from "./components/HighlightText";
 
+// window 组件
+export * from "./components/Window";
+
+// blockUI 组件
+export * from "./components/BlockUI";
+
 // 导出所有钩子
 export * from "./hooks";
 

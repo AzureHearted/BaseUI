@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     BackToTop: typeof import('./src/components/BackToTop/BackToTop.vue')['default']
+    BlockUI: typeof import('./src/components/BlockUI/BlockUI.vue')['default']
     Button: typeof import('./src/components/Button/Button.vue')['default']
     Flex: typeof import('./src/components/Flex/Flex.vue')['default']
     FloatButton: typeof import('./src/components/FloatButton/FloatButton.vue')['default']
