@@ -307,14 +307,6 @@ useResizeObserver(viewportDOM, (entries) => {
 
   scheduleUpdateThumb();
 
-  // ? 发生滚动事件(因为有可能视口变化导致滚动位置变化)
-  emits(
-    "scroll",
-    viewportScrollX.value,
-    viewportScrollY.value,
-    scrollPercent.value.x,
-    scrollPercent.value.y,
-  );
   // ? 更新model-value
   modelValueScrollY.value =
     (props.valueMode === "percent"
@@ -324,6 +316,21 @@ useResizeObserver(viewportDOM, (entries) => {
     (props.valueMode === "percent"
       ? scrollPercent.value.x
       : viewportScrollX.value) || modelValueScrollY.value;
+});
+
+onMounted(() => {
+  const { width, height, left, top, right, bottom, x, y } =
+    viewportDOM.value.getBoundingClientRect();
+  viewportInfo.width = width;
+  viewportInfo.height = height;
+  viewportInfo.left = left;
+  viewportInfo.top = top;
+  viewportInfo.right = right;
+  viewportInfo.bottom = bottom;
+  viewportInfo.x = x;
+  viewportInfo.y = y;
+  viewportInfo.scrollHeight = viewportDOM.value?.scrollHeight;
+  viewportInfo.scrollWidth = viewportDOM.value?.scrollWidth;
 });
 
 // s 滚动条状态数据
@@ -552,7 +559,8 @@ const { y: verticalThumbTop } = useDraggable(verticalThumbDOM, {
     state.vertical.isDragging = true;
   },
   onMove({ y: _y }) {
-    const { clientHeight, scrollHeight } = viewportDOM.value!;
+    if (!viewportDOM.value) return;
+    const { clientHeight, scrollHeight } = viewportDOM.value;
     // track 总长
     const trackLen = Math.floor(verticalTrackInfo.height.value);
     // 计算滚动条长度
@@ -566,7 +574,6 @@ const { y: verticalThumbTop } = useDraggable(verticalThumbDOM, {
     // 计算滚动高度
     const scrollY =
       verticalThumbTop.value * ((scrollHeight - clientHeight) / remainTrackLen);
-    // 更新滚动位置
     viewportScrollY.value = scrollY;
     // ? 发送事件
     emits(
@@ -637,7 +644,8 @@ const { x: horizontalThumbLeft } = useDraggable(horizontalThumbDOM, {
     state.horizontal.isDragging = true;
   },
   onMove({ x: _x }) {
-    const { clientWidth, scrollWidth } = viewportDOM.value!;
+    if (!viewportDOM.value) return;
+    const { clientWidth, scrollWidth } = viewportDOM.value;
     // track 总长
     const trackLen = Math.floor(horizontalTrackInfo.width.value);
     // 计算滚动条长度
@@ -900,12 +908,10 @@ $track-hover-padding: v-bind("props.hoverThumbPadding");
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    /* scroll-behavior: smooth; */
     overflow-y: v-bind("props.overflowY");
     overflow-x: v-bind("props.overflowX");
-    /* transition: 0.5 ease; */
 
-    /* ? 阻止滚动溢出到父级 */
+    // ? 阻止滚动溢出到父级
     overscroll-behavior: contain;
 
     &:focus {
@@ -913,13 +919,15 @@ $track-hover-padding: v-bind("props.hoverThumbPadding");
     }
   }
 
-  // ? 判断是否去除原生滚动条样式
+  // ? 在没有禁用自定义滚动条的时候隐藏掉浏览器的滚动条
   &:not(&--disable) &__viewport {
-    &::-webkit-scrollbar {
-      display: none !important;
-      scrollbar-width: none !important; /* Firefox */
-      -ms-overflow-style: none !important; /* IE 10+ */
-    }
+    scrollbar-width: none !important;
+  }
+
+  // ? 当前要禁用自定义滚动条的时候显示浏览器原生滚动条
+  &--disable {
+    scrollbar-color: rgb(85, 170, 255) transparent;
+    scrollbar-gutter: stable;
   }
 
   // z 虚拟滚动条track (共通样式)
