@@ -54,7 +54,7 @@ import {
 } from "vue";
 import TreeNode from "./Node.vue";
 import { useDebounceFn, useResizeObserver, useScroll } from "@vueuse/core";
-import type { TreeNodeItem, VirtualTreeEmits, VirtualTreeProps } from "./type";
+import type { TreeNodeItem, VirtualTreeEmits, VirtualTreeProps } from "./types";
 import { treeSymbol } from "./symbol";
 
 // 组件选项

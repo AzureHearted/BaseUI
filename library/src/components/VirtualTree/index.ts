@@ -3,4 +3,4 @@ export type {
   VirtualTreeProps as BaseVirtualTreeProps,
   TreeNodeItem as BaseTreeNodeItem,
   VirtualTreeEmits as BaseVirtualTreeEmits,
-} from "./type";
+} from "./types";

@@ -51,7 +51,7 @@ import NodeLabel from "./NodeLabel.vue";
 
 import { useCustomDrag } from "@/hooks";
 import { treeSymbol } from "./symbol";
-import type { TreeNodeProps } from "./type";
+import type { TreeNodeProps } from "./types";
 import type { TreeContext } from "./Tree.vue";
 
 defineOptions({

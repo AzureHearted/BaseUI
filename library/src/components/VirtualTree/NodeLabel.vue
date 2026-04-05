@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { computed, inject, useTemplateRef, type ShallowRef } from "vue";
 import HighlightText from "../HighlightText/HighlightText.vue";
-import type { TreeNodeLabelProps } from "./type";
+import type { TreeNodeLabelProps } from "./types";
 import { ThemeKey } from "@/theme";
 import { resolveIsDark } from "@/utils/theme";
 

@@ -59,7 +59,7 @@ import {
   type ShallowRef,
 } from "vue";
 
-import type { Item, Pos, VirtualGridProps } from "./type";
+import type { Item, Pos, VirtualGridProps } from "./types";
 
 import { useDebounceFn, useResizeObserver, useScroll } from "@vueuse/core";
 import { BaseBackToTop } from "../BackToTop";
