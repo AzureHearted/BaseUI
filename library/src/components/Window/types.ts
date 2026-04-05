@@ -1,22 +1,15 @@
 import type { ThemeMode } from "@/theme";
 import type { MaybeComputedElementRef } from "@vueuse/core";
+import { extend } from "hammerjs";
 import type { HTMLAttributes } from "vue";
 
-export interface WindowProps {
+export interface WindowProps extends Omit<FrameProps, "isMax"> {
   /** 边界容器 (如果不传入则默认使用窗口尺寸)  */
   boundaryContainer?: MaybeComputedElementRef;
   /** 初始窗口宽度 @default 500 */
   initWidth?: number;
   /** 初始窗口高度 @default 400 */
   initHeight?: number;
-  /** 显示最大化按钮 @default true */
-  showMaxButton?: boolean;
-  /** 显示关闭按钮 @default true */
-  showCloseButton?: boolean;
-  /** 显示最小化按钮 @default true */
-  showMinButton?: boolean;
-  /** 内容区样式 */
-  contentStyle?: HTMLAttributes["style"];
   /** 最小宽度 @default 200 */
   minWidth?: number;
   /** 最小高度 @default 120 */
@@ -38,22 +31,15 @@ export interface WindowEmits {
   minimize: [];
 }
 
-export interface FrameProps {
+export interface FrameProps extends Omit<TitleBarProps, "theme"> {
   /** @default true */
   showTitleBar?: boolean;
-  title?: string;
   /** 是否是最大化状态 @default false */
   isMax?: boolean;
   /** 内容区样式 */
   contentStyle?: HTMLAttributes["style"];
   /** 内容区类名 */
   contentClass?: HTMLAttributes["class"];
-  /** 显示最大化按钮 @default true */
-  showMaxButton?: boolean;
-  /** 显示关闭按钮 @default true */
-  showCloseButton?: boolean;
-  /** 显示最小化按钮 @default true */
-  showMinButton?: boolean;
 }
 
 export interface FrameEmits {

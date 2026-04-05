@@ -8,10 +8,11 @@
   >
     <BaseFrame
       ref="frameRef"
+      :title="title"
+      :is-max="state.maximized"
       class="base-window__frame"
       style="width: 100%; height: 100%"
       :content-style="contentStyle"
-      :is-max="state.maximized"
       v-bind="$attrs"
       :show-close-button="showCloseButton"
       :show-max-button="showMaxButton"
@@ -19,7 +20,18 @@
       @window-change="onChangeWindow"
       @titlebar-dblclick="onChangeWindow('scale')"
     >
-      <slot></slot>
+      <template #title-bar>
+        <slot name="title-bar"></slot>
+      </template>
+      <template #title-bar-left>
+        <slot name="title-bar-left"></slot>
+      </template>
+      <template #title-bar-middle>
+        <slot name="title-bar-middle"></slot>
+      </template>
+      <template #default>
+        <slot></slot>
+      </template>
     </BaseFrame>
     <!-- 四边 -->
     <div

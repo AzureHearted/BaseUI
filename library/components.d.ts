@@ -14,6 +14,7 @@ declare module 'vue' {
     BackToTop: typeof import('./src/components/BackToTop/BackToTop.vue')['default']
     BlockUI: typeof import('./src/components/BlockUI/BlockUI.vue')['default']
     Button: typeof import('./src/components/Button/Button.vue')['default']
+    Card: typeof import('./src/components/Card/Card.vue')['default']
     Flex: typeof import('./src/components/Flex/Flex.vue')['default']
     FloatButton: typeof import('./src/components/FloatButton/FloatButton.vue')['default']
     Frame: typeof import('./src/components/Window/Frame.vue')['default']
