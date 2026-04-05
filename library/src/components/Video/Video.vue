@@ -11,7 +11,12 @@
     }"
   >
     <!-- ? 视频wrap -->
-    <div ref="videoWrapRef" class="base-video__wrapper" v-lazy>
+    <div
+      ref="videoWrapRef"
+      class="base-video__wrapper"
+      v-bind="videoAttrs"
+      v-lazy
+    >
       <!-- ? 默认插槽 -->
       <slot>
         <!-- s 正常视频元素 -->
@@ -25,7 +30,6 @@
           disable-picture-in-picture
           :draggable="draggable"
           :poster="useThumb ? thumb : ''"
-          v-bind="videoAttrs"
         />
         <!-- s 加载错误时的显示元素 -->
         <div v-if="state.isError" class="base-video__error-img">
@@ -451,17 +455,19 @@ const vLazy: Directive = {
     & > video {
       display: block;
 
-      // &:not([width]) {
-      //   width: 100%;
-      // }
-      // &:not([height]) {
-      //   height: auto;
-      // }
-      width: 100%;
-      height: auto;
+      &:not([width]) {
+        width: 100%;
+      }
+      &:not([height]) {
+        height: auto;
+      }
+      // width: 100%;
+      // height: auto;
 
       padding: 0;
-      object-fit: cover;
+      border: unset;
+      outline: unset;
+      object-fit: contain;
       background: transparent;
       // 禁止选中文字
       user-select: none;
@@ -482,7 +488,6 @@ const vLazy: Directive = {
   // 加载错误的样式
   &__error &__wrapper > video {
     opacity: 0;
-    transform: scale(0.8);
     border: unset;
     object-fit: contain;
   }
@@ -490,20 +495,20 @@ const vLazy: Directive = {
 
 /* 加载错误时候的图标样式 */
 .base-video__error-img {
-  position: absolute;
-  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   svg {
-    width: 100%;
-    height: 100%;
+    // width: 60%;
+    // height: auto;
     fill: black;
     transition: 0.5s ease;
   }
-  /* 暗黑主题切换 */
-  .base-img--dark & {
-    /** 暗黑模式样式 */
-    svg {
-      fill: hsl(0, 0%, 80%);
-    }
+
+  /** 暗黑模式样式 */
+  .base-video--dark & > svg {
+    fill: hsl(0, 0%, 80%);
   }
 }
 
