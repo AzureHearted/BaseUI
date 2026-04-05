@@ -14,6 +14,8 @@ export interface ImgProps {
   thumbMaxSize?: number;
   /** 当缩略图存在时，是否将其作为最终显示结果（不再请求原图）。(条件：必须在 useThumb 为 true 时生效) @default false	*/
   useThumbAsFinal?: boolean;
+  /** 是否懒加载 */
+  lazy?: boolean;
   /** 监听视口 (用于设定监听视口，用于图片懒加载) */
   viewport?: IntersectionObserverInit["root"];
   /** 监听视口的Margin */

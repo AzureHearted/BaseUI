@@ -11,7 +11,7 @@
     :data-show-loading-animation="showLoadingAnimation"
   >
     <!-- ? 图片的wrap -->
-    <div ref="imgWrapRef" class="base-img__wrapper" v-lazy>
+    <div ref="imgWrapRef" class="base-img__wrapper" v-bind="imageAttrs" v-lazy>
       <!-- ? 默认插槽 (可替换为其他元素) -->
       <slot>
         <!-- ? 默认插槽：img元素 -->
@@ -20,7 +20,6 @@
           ref="imgRef"
           :decoding="decoding"
           :draggable="draggable"
-          v-bind="imageAttrs"
         />
         <!-- ? 错误图片-->
         <Transition>
@@ -78,7 +77,7 @@ import {
   useTemplateRef,
   inject,
 } from "vue";
-import type { Directive, Ref, ShallowRef, Transition } from "vue";
+import type { Directive, ShallowRef, Transition } from "vue";
 import type { ImgProps, ReadyInfo } from "./types";
 import { ThemeKey } from "@/theme";
 import { resolveIsDark } from "@/utils/theme";
@@ -94,6 +93,7 @@ const props = withDefaults(defineProps<ImgProps>(), {
   useThumb: false,
   thumb: "",
   thumbMaxSize: 400,
+  lazy: true,
   observerOnce: true,
   manualControl: false,
   draggable: true, // 默认允许拖拽图片
@@ -455,7 +455,13 @@ async function generateThumbnail<T = File | string>(
 // ? 自定义指令
 const vLazy: Directive = {
   mounted: () => {
-    useIntersectionObserver();
+    if (props.lazy) {
+      useIntersectionObserver();
+    } else {
+      let src: string = props.src; // 默认使用原图
+      let thumb: string = props.thumb;
+      loadImage(src, thumb);
+    }
   },
 };
 
@@ -463,9 +469,10 @@ const vLazy: Directive = {
 function useIntersectionObserver() {
   setTimeout(() => {
     let src: string = props.src; // 默认使用原图
+    let thumb: string = props.thumb;
 
     if (props.initShow) {
-      loadImage(src);
+      loadImage(src, thumb);
       return;
     }
 
@@ -566,6 +573,7 @@ function useIntersectionObserver() {
 
 .base-img {
   &__wrapper {
+    position: relative;
     & > img {
       // 图片默认不显示
       opacity: 0;
@@ -645,7 +653,6 @@ function useIntersectionObserver() {
   // 加载错误的样式
   &__error &__wrapper > img {
     opacity: 0;
-    transform: scale(0.8);
     border: unset;
     object-fit: contain;
   }
@@ -653,17 +660,20 @@ function useIntersectionObserver() {
 
 /* 加载错误时候的图标样式 */
 .base-img__error-img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   svg {
+    // width: 60%;
+    // height: auto;
     fill: black;
     transition: 0.5s ease;
   }
 
-  /* 暗黑主题切换 */
-  .base-img--dark & {
-    /** 暗黑模式样式 */
-    svg {
-      fill: hsl(0, 0%, 80%);
-    }
+  /** 暗黑模式样式 */
+  .base-img--dark & > svg {
+    fill: hsl(0, 0%, 80%);
   }
 }
 
