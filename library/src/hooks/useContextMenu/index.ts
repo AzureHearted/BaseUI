@@ -96,7 +96,7 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
   async function showContextMenu<T>(
     event: PointerEvent,
     options: Array<ContextMenuOption<T>>,
-  ) {
+  ): Promise<T | null> {
     try {
       // 调用组件实例内部的 showMenu 方法
       const command = await instance.showMenu(event, options);
