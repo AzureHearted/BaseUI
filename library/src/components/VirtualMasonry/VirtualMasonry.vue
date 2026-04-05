@@ -206,15 +206,7 @@ function bindingScrollContainer(scrollContainer: HTMLElement | null) {
     useScroll(scrollContainer, {
       onScroll(_e) {
         if (state.isFreeze) return;
-        computeVisibleStateRAF(true);
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(() => {
-          clearTimeout(timer);
-          if (state.scrollState.isScrolling) {
-            return;
-          }
-          computeVisibleStateRAF();
-        }, 300);
+        computeVisibleStateRAF();
       },
     }),
   );
