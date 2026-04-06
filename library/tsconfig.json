@@ -1,27 +1,26 @@
 {
-  "extends": [
-    "@vue/tsconfig/tsconfig.dom.json"
-  ],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    },
-    "allowJs": true,
-    "noFallthroughCasesInSwitch": true,
-    "declaration": true,
-    "declarationDir": "dist",
-    "outDir": "dist",
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": [
-    "env.d.ts",
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue"
-  ]
+	"extends": ["@vue/tsconfig/tsconfig.dom.json"],
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"allowJs": true,
+		"declaration": true,
+		"declarationDir": "dist",
+		"outDir": "dist",
+		"allowSyntheticDefaultImports": true,
+		/* 文件大小写一致（跨平台必备） */
+		"forceConsistentCasingInFileNames": true,
+
+		/* 开启所有严格模式（类型安全核心开关） */
+		"strict": true,
+		/* 未使用的变量直接报错 */
+		"noUnusedLocals": true,
+		/* 未使用的函数参数报错 */
+		"noUnusedParameters": true,
+		/* 禁止 switch case 穿透（防止漏写 break） */
+		"noFallthroughCasesInSwitch": true
+	},
+	"include": ["env.d.ts", "src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

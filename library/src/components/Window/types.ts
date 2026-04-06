@@ -1,6 +1,5 @@
 import type { ThemeMode } from "@/theme";
 import type { MaybeComputedElementRef } from "@vueuse/core";
-import { extend } from "hammerjs";
 import type { HTMLAttributes } from "vue";
 
 export interface WindowProps extends Omit<FrameProps, "isMax"> {

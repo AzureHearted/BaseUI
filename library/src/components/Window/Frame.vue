@@ -38,7 +38,7 @@
 import TitleBar from "./TitleBar.vue";
 import { usePreferredDark } from "@vueuse/core";
 import { useTemplateRef } from "vue";
-import type { HTMLAttributes, ShallowRef } from "vue";
+import type { ShallowRef } from "vue";
 import type { FrameEmits, FrameProps } from "./types";
 
 defineOptions({

@@ -30,7 +30,7 @@
 <script lang="ts" setup>
 import { ThemeKey } from "@/theme";
 import { resolveIsDark } from "@/utils/theme";
-import { computed, inject, useSlots } from "vue";
+import { computed, inject } from "vue";
 import type { PureInputProps } from "./types";
 
 const props = withDefaults(defineProps<PureInputProps>(), {});
@@ -100,7 +100,7 @@ const isDark = computed(() => {
     }
   }
 
-  &.is-round &__wrapper{
+  &.is-round &__wrapper {
     border-radius: var(--height);
   }
 

@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef, watch, type ShallowRef } from "vue";
+import { computed, watch } from "vue";
 import type { InputNumberProps } from "./types";
 import PureInput from "../PureInput/PureInput.vue";
 
@@ -63,9 +63,9 @@ const emits = defineEmits<{
 
 const canShowClearButton = computed(() => modelValue.value != null);
 
-const inputRef = useTemplateRef(
-  "inputRef",
-) as ShallowRef<HTMLInputElement | null>;
+// const inputRef = useTemplateRef(
+//   "inputRef",
+// ) as ShallowRef<HTMLInputElement | null>;
 
 // 输入
 function handleInput(e: Event) {

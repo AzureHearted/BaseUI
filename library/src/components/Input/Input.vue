@@ -32,10 +32,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef, type ShallowRef } from "vue";
+import { computed } from "vue";
 import type { InputProps } from "./types";
 import PureInput from "../PureInput/PureInput.vue";
-import Scrollbar from "../Scrollbar/Scrollbar.vue";
 
 defineOptions({
   name: "BaseInput",
@@ -56,9 +55,9 @@ const emits = defineEmits<{
 
 const canShowClearButton = computed(() => modelValue.value.trim() !== "");
 
-const inputRef = useTemplateRef(
-  "inputRef",
-) as ShallowRef<HTMLInputElement | null>;
+// const inputRef = useTemplateRef(
+//   "inputRef",
+// ) as ShallowRef<HTMLInputElement | null>;
 
 // 输入
 function handleInput(e: Event) {

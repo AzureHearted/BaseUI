@@ -3,9 +3,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide, watchEffect, watch, computed, onMounted } from "vue";
+import { ref, provide, watch, computed } from "vue";
 import { resolveIsDark } from "@/utils/theme";
-import { ThemeKey, type ThemeMode } from "@/theme";
+import { ThemeKey } from "@/theme";
 import type { ProviderProps } from "./types";
 import { usePreferredDark } from "@vueuse/core";
 

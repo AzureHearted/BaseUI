@@ -108,7 +108,7 @@ import {
   watch,
   inject,
 } from "vue";
-import type { CSSProperties, ShallowRef, VNode } from "vue";
+import type { CSSProperties, ShallowRef } from "vue";
 import { tabsSymbol } from "./symbol";
 import {
   useDraggable,

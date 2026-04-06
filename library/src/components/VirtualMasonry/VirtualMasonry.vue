@@ -199,7 +199,6 @@ async function init() {
   computedItemPosDebounce(props.items);
 }
 
-let timer: number;
 // f 绑定滚动容器
 function bindingScrollContainer(scrollContainer: HTMLElement | null) {
   state.scrollState = reactive(
