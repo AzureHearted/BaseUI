@@ -1,6 +1,6 @@
 <template>
   <span class="base-highlight-text">
-    <template v-for="(part, index) in segments" :key="index">
+    <template v-for="(part, _index) in segments" :key="_index">
       <mark v-if="part.isMatch" class="base-highlight-text__target">{{
         part.text
       }}</mark>
