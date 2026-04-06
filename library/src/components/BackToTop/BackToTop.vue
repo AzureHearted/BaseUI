@@ -6,7 +6,7 @@
         'base-back-to-top--dark': isDark,
       }"
       v-show="bakctopShow && !disabled"
-      @click="backToTop"
+      @click.stop="backToTop"
     >
       <i class="base-back-to-top__icon">
         <svg viewBox="0 0 1024 1024" width="1.2em" height="1.2em">
