@@ -1,7 +1,7 @@
 <template>
   <div
     ref="containerDOM"
-    class="base-virtual-grid__container"
+    class="base-virtual-grid"
     :style="{
       height: scrollContainerDOM != null ? '100%' : '',
       overflow: scrollContainerDOM != null ? 'hidden auto' : '',
@@ -10,7 +10,7 @@
     <!-- 包裹容器 -->
     <div
       ref="wrapDOM"
-      class="base-virtual-grid__wrap"
+      class="base-virtual-grid__wrapper"
       :style="{
         height: `${state.wrapState.height}px`,
       }"
@@ -385,23 +385,23 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-/* 容器 */
-.base-virtual-grid {
-  &__container {
-    // 自定义滚动条颜色
-    scrollbar-color: rgb(85, 170, 255) transparent;
-    scrollbar-gutter: stable;
-  }
+* {
+  box-sizing: border-box;
+}
 
-  &__wrap {
+.base-virtual-grid {
+  // 自定义滚动条颜色
+  scrollbar-color: rgb(85, 170, 255) transparent;
+  scrollbar-gutter: stable;
+
+  &__wrapper {
     position: relative;
     width: 100%;
   }
 
   &__item {
     position: absolute;
-    /* overflow: hidden; */
-    /* background-color: rgba(126, 126, 126, 0.3); */
+
     &__allow-transition {
       will-change: transform;
       transition: 0.5s ease;
