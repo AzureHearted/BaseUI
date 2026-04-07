@@ -4,7 +4,7 @@
     :class="{
       'base-context-menu--dark': isDark,
     }"
-    @click.self="hideMenu"
+    @click.self="closeMenu"
     @contextmenu.prevent
   >
     <div
@@ -37,13 +37,19 @@ import {
   useTemplateRef,
   type ShallowRef,
 } from "vue";
-import type { ContextMenuProps, ContextMenuOption } from "./types";
+import type {
+  ContextMenuProps,
+  ContextMenuOption,
+  ContextMenuEmits,
+} from "./types";
 import { resolveIsDark } from "@/utils/theme";
 import { ThemeKey } from "@/theme";
 
 const props = withDefaults(defineProps<ContextMenuProps>(), {
   fontSize: 14,
 });
+
+const emits = defineEmits<ContextMenuEmits>();
 
 // 主题上下文注入
 const themeContext = inject(ThemeKey, null);
@@ -154,6 +160,7 @@ function handleShow(e: PointerEvent) {
         state.transitioning = false;
         menuDOM.style.removeProperty("transition");
         menuDOM.removeEventListener("transitionend", finished);
+        emits("show");
       };
 
       menuDOM.addEventListener("transitionend", finished);
@@ -162,22 +169,26 @@ function handleShow(e: PointerEvent) {
 }
 
 // 点击菜单外面区域时隐藏菜单
-onClickOutside(contextMenuDOM, (_e) => {
-  if (state.isVisible) hideMenu();
+onClickOutside(contextMenuDOM, (e) => {
+  if (state.isVisible) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeMenu();
+  }
 });
 
 // 隐藏菜单
-async function hideMenu() {
+async function closeMenu() {
   // 如果菜单被隐藏，但 Promise 还没解决，则解决为 null
   if (resolveAction) {
     resolveAction(null);
     resolveAction = null;
   }
-  handleHide();
+  handleClose();
 }
 
-// f 隐藏菜单的flip动画函数
-async function handleHide() {
+// f 关闭菜单的flip动画函数
+async function handleClose() {
   const menuDOM = contextMenuDOM.value;
   if (!menuDOM) return;
   return new Promise(() => {
@@ -195,6 +206,7 @@ async function handleHide() {
         menuDOM.style.removeProperty("transform");
         menuDOM.style.removeProperty("opacity");
         menuDOM.removeEventListener("transitionend", finished);
+        emits("closed");
       };
 
       state.isVisible = false;
@@ -212,7 +224,7 @@ function handleItemClick(event: PointerEvent, index: number) {
   if (disable) return;
   if (command && resolveAction) {
     resolveAction(command); // 解决 Promise，返回选中的命令
-    hideMenu();
+    closeMenu();
   }
 }
 

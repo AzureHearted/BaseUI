@@ -1,13 +1,16 @@
 import {
-  createApp,
+  getCurrentInstance,
+  h,
   onActivated,
   onDeactivated,
   onMounted,
   onUnmounted,
   reactive,
   ref,
+  render,
+  toValue,
 } from "vue";
-import type { ComputedRef, Ref } from "vue";
+import type { MaybeRefOrGetter, Ref, ShallowRef } from "vue";
 import ContextMenu from "./ContextMenu.vue";
 import { unrefElement } from "@vueuse/core";
 import type { ThemeMode } from "@/theme";
@@ -15,9 +18,13 @@ import type { ContextMenuOption } from "./types";
 
 // t 可能的 HTMLElement 类型
 type MaybeHTMLElementRef =
-  | Ref<HTMLElement | null>
-  | ComputedRef<HTMLElement | null>
-  | Parameters<typeof unrefElement<HTMLElement | null | undefined>>[0];
+  | MaybeRefOrGetter<HTMLElement | null | undefined>
+  | Readonly<Ref<HTMLElement | null>>
+  | Readonly<ShallowRef<HTMLElement | null>>;
+
+function resolveEl(el: MaybeHTMLElementRef) {
+  return unrefElement(toValue(el));
+}
 
 // t 定义菜单项配置
 type BaseContextMenuOptions = {
@@ -27,11 +34,17 @@ type BaseContextMenuOptions = {
 };
 
 /**
- * 动态创建并返回一个用于显示右键菜单的函数。
- *  @returns  showContextMenu(event, options) 函数
+ *  动态创建并返回一个用于显示右键菜单的函数。
+ *  @returns
  */
 export function useContextMenu(options?: BaseContextMenuOptions) {
-  // 1. 创建一个临时的 DOM 容器
+  const currentInstance = getCurrentInstance();
+
+  if (!currentInstance) {
+    throw new Error("useContextMenu 必须在 setup 中调用");
+  }
+
+  // 创建一个临时的 DOM 容器
   const container = document.createElement("div");
   // s 目标元素DOM
   const rootDOM = ref<HTMLElement | undefined>();
@@ -40,8 +53,9 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
     isMounted: false,
   });
 
-  let menuApp: ReturnType<typeof createApp> | undefined;
-  let instance: InstanceType<typeof ContextMenu>;
+  let exposed: {
+    showMenu?: InstanceType<typeof ContextMenu>["showMenu"];
+  } | null = null;
 
   // w 组件挂载后进行初始化
   onMounted(() => {
@@ -60,25 +74,17 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
 
   // f 初始化函数
   function init() {
-    // 销毁上一次创建的组件
     destroy();
-    // 获取root元素
-    rootDOM.value = unrefElement(options?.root) || document.body;
-    // 重新添加到root元素中
+
+    rootDOM.value = resolveEl(options?.root) ?? document.body;
     rootDOM.value.appendChild(container);
-    // 创建 Vue App 实例
-    menuApp = createApp(ContextMenu, {
-      fontSize: options?.fontSize || 16,
-      theme: options?.theme,
-    });
-    // 挂载组件i
-    instance = menuApp.mount(container) as InstanceType<typeof ContextMenu>;
   }
 
   // f 销毁函数
   function destroy() {
+    // 卸载 vnode
+    render(null, container);
     // 销毁组件
-    menuApp?.unmount();
     if (container.isConnected) {
       rootDOM.value?.removeChild(container);
     }
@@ -90,22 +96,38 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
   /**
    * f 显示菜单并等待用户选择
    * @param  event - 触发右键菜单的事件
-   * @param options - 菜单项配置 { label: string, command: string }
+   * @param menuItems - 菜单项配置 { label: string, command: string }
    * @returns  返回选中的 command 或 null
    */
-  async function showContextMenu<T>(
+  const showContextMenu = async <T>(
     event: PointerEvent,
-    options: Array<ContextMenuOption<T>>,
-  ): Promise<T | null> {
+    menuItems: Array<ContextMenuOption<T>>,
+    showOptions?: Omit<BaseContextMenuOptions, "root">,
+  ): Promise<T | null> => {
+    // 创建 vnode（替代 createApp）
+    const vnode = h(ContextMenu, {
+      fontSize: showOptions?.fontSize ?? options?.fontSize ?? 16,
+      theme: showOptions?.theme ?? options?.theme,
+    });
+
+    render(vnode, container);
+    // 拿到组件暴露的属性和方法
+    exposed = vnode.component?.exposed as any;
+
+    if (!exposed) {
+      console.warn("ContextMenu 尚未初始化");
+      return null;
+    }
+
     try {
       // 调用组件实例内部的 showMenu 方法
-      const command = await instance.showMenu(event, options);
+      const command = (await exposed.showMenu?.(event, menuItems)) ?? null;
       return command;
     } catch (e) {
       console.error("显示上下文菜单时出错：", e);
       return null;
     }
-  }
+  };
 
   return { showContextMenu, init };
 }

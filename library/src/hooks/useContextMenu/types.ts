@@ -16,3 +16,8 @@ export interface ContextMenuProps {
   /** 字体大小 @default 14 */
   fontSize?: number;
 }
+
+export interface ContextMenuEmits {
+  show: [];
+  closed: [];
+}
