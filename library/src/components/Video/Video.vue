@@ -56,23 +56,24 @@
 </template>
 
 <script setup lang="ts">
-// 导入工具函数
+import { ThemeKey } from "@/theme";
+import { resolveIsDark } from "@/utils/theme";
+import { useElementHover, useMediaControls } from "@vueuse/core";
+import type { Directive, ShallowRef } from "vue";
 import {
   computed,
   inject,
   nextTick,
   onMounted,
   onUnmounted,
+  reactive,
+  ref,
   useAttrs,
   useSlots,
   useTemplateRef,
+  watch,
 } from "vue";
-import { ref, reactive, watch } from "vue";
-import type { Directive, ShallowRef } from "vue";
-import { useElementHover, useMediaControls } from "@vueuse/core";
 import type { ReadyInfo, VideoEmits, VideoProps } from "./types";
-import { ThemeKey } from "@/theme";
-import { resolveIsDark } from "@/utils/theme";
 
 // 定义props
 const props = withDefaults(defineProps<VideoProps>(), {
@@ -141,7 +142,6 @@ const containerDOM = ref<HTMLElement | null>(null);
 watch(
   () => props.src,
   (newSrc) => {
-    // console.log("src变化", newSrc, oldSrc);
     if (mounted.value) {
       loadVideo(newSrc);
     }
@@ -161,7 +161,7 @@ const videoWrapRef = useTemplateRef(
 ) as ShallowRef<HTMLDivElement | null>;
 
 // s imgWarp尺寸数据
-const videoWrapDimensions = ref({ width: 0, height: 0 }); // ⬅️ 新的响应式依赖
+const videoWrapDimensions = ref({ width: 0, height: 0 });
 
 // ? 监听器
 let observer: ResizeObserver | null = null;
@@ -294,7 +294,6 @@ function getVideoSize(url: string): Promise<{ width: number; height: number }> {
 
 // f 加载
 const loadVideo = async (src: string) => {
-  // console.log('加载视频', src)
   // f 视频加载函数
   const handleLoad = () => {
     if (videoRef.value) {
@@ -345,7 +344,7 @@ const loadVideo = async (src: string) => {
       emits("loaded", info);
     })
     .catch(() => {
-      console.log("视频加载错误", src);
+      console.warn("[base-video] 视频加载错误", src);
       state.isError = true;
       state.loaded = true;
       // 触发error事件
@@ -385,7 +384,6 @@ const vLazy: Directive = {
       const handleIntersection = async (
         entries: IntersectionObserverEntry[],
       ) => {
-        // console.log(entries[0].isIntersecting);
         if (entries[0].isIntersecting) {
           // 判断是否只监听一次
           if (props.observerOnce) {
@@ -419,13 +417,10 @@ const vLazy: Directive = {
         threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
       };
 
-      // console.log(viewportDom.value);
       const observer = new IntersectionObserver(handleIntersection, options);
       // 开始监听
       if (containerDOM.value) {
         observer.observe(containerDOM.value);
-      } else {
-        // console.log('监听失效，未找到组件container')
       }
     }, 0);
   },
@@ -453,16 +448,10 @@ const vLazy: Directive = {
     }
     // 视频样式
     & > video {
-      display: block !important;
+      display: block;
 
-      &:not([width]) {
-        width: 100%;
-      }
-      &:not([height]) {
-        height: auto;
-      }
-      // width: 100%;
-      // height: auto;
+      width: 100%;
+      height: 100%;
 
       padding: 0;
       border: unset;
