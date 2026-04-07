@@ -652,9 +652,7 @@ function useIntersectionObserver() {
 
   // 加载错误的样式
   &__error &__wrapper > img {
-    opacity: 0;
-    border: unset;
-    object-fit: contain;
+    display: none !important;
   }
 }
 

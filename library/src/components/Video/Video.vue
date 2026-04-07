@@ -453,7 +453,7 @@ const vLazy: Directive = {
     }
     // 视频样式
     & > video {
-      display: block;
+      display: block !important;
 
       &:not([width]) {
         width: 100%;
@@ -487,9 +487,7 @@ const vLazy: Directive = {
 
   // 加载错误的样式
   &__error &__wrapper > video {
-    opacity: 0;
-    border: unset;
-    object-fit: contain;
+    display: none !important;
   }
 }
 
