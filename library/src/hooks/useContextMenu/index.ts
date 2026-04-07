@@ -22,15 +22,11 @@ type MaybeHTMLElementRef =
   | Readonly<Ref<HTMLElement | null>>
   | Readonly<ShallowRef<HTMLElement | null>>;
 
-function resolveEl(el: MaybeHTMLElementRef) {
-  return unrefElement(toValue(el));
-}
-
 // t 定义菜单项配置
 type BaseContextMenuOptions = {
   root?: MaybeHTMLElementRef;
-  fontSize?: number;
-  theme?: ThemeMode;
+  fontSize?: MaybeRefOrGetter<number | null | undefined>;
+  theme?: MaybeRefOrGetter<ThemeMode | null | undefined>;
 };
 
 /**
@@ -76,7 +72,7 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
   function init() {
     destroy();
 
-    rootDOM.value = resolveEl(options?.root) ?? document.body;
+    rootDOM.value = unrefElement(toValue(options?.root)) ?? document.body;
     rootDOM.value.appendChild(container);
   }
 
@@ -102,12 +98,11 @@ export function useContextMenu(options?: BaseContextMenuOptions) {
   const showContextMenu = async <T>(
     event: PointerEvent,
     menuItems: Array<ContextMenuOption<T>>,
-    showOptions?: Omit<BaseContextMenuOptions, "root">,
   ): Promise<T | null> => {
     // 创建 vnode（替代 createApp）
     const vnode = h(ContextMenu, {
-      fontSize: showOptions?.fontSize ?? options?.fontSize ?? 16,
-      theme: showOptions?.theme ?? options?.theme,
+      fontSize: toValue(options?.fontSize) ?? 16,
+      theme: toValue(options?.theme) ?? undefined,
     });
 
     render(vnode, container);
