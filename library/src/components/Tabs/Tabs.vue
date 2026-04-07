@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="base-tabs__container"
-    :class="{ 'base-tabs__container--dark': isDark }"
-  >
+  <div class="base-tabs" :class="{ 'base-tabs--dark': isDark }">
     <div ref="navRef" class="base-tabs__nav">
       <!-- ? 向左切换控制条 -->
       <div
@@ -29,7 +26,7 @@
           </g>
         </svg>
       </div>
-      <div ref="navWrapRef" class="base-tabs__nav-wrap">
+      <div ref="navWrapRef" class="base-tabs__nav-wrapper">
         <!-- s Tab列表标签 -->
         <div
           ref="tabRefs"
@@ -94,22 +91,9 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  onActivated,
-  provide,
-  reactive,
-  ref,
-  shallowReactive,
-  useTemplateRef,
-  watch,
-  inject,
-} from "vue";
-import type { CSSProperties, ShallowRef } from "vue";
-import { tabsSymbol } from "./symbol";
+import { ThemeKey } from "@/theme";
+import { resolveIsDark } from "@/utils/theme";
+import type { UseElementBoundingReturn } from "@vueuse/core";
 import {
   useDraggable,
   useElementBounding,
@@ -119,10 +103,23 @@ import {
   useScroll,
   watchDebounced,
 } from "@vueuse/core";
-import type { UseElementBoundingReturn } from "@vueuse/core";
+import type { CSSProperties, ShallowRef } from "vue";
+import {
+  computed,
+  inject,
+  nextTick,
+  onActivated,
+  onMounted,
+  onUnmounted,
+  provide,
+  reactive,
+  ref,
+  shallowReactive,
+  useTemplateRef,
+  watch,
+} from "vue";
+import { tabsSymbol } from "./symbol";
 import type { TabItem, TabItemRegistered, TabsProps } from "./types";
-import { ThemeKey } from "@/theme";
-import { resolveIsDark } from "@/utils/theme";
 
 // 组件基本信息
 defineOptions({
@@ -523,152 +520,151 @@ provide(tabsSymbol, {
   box-sizing: border-box;
 }
 
-.base-tabs__container {
+.base-tabs {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-}
 
-.base-tabs__nav {
-  flex-shrink: 0;
-  display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
-  user-select: none;
+  &__nav {
+    flex-shrink: 0;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    user-select: none;
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.base-tabs__nav-wrap {
-  position: relative;
-  width: fit-content;
-  display: flex;
-
-  /* ? nav-wrap 的下方的装饰线 */
-  &::before {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background-color: #ccc;
+    // 隐藏滚动条
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
-  /* ? 底边悬浮条 */
-  &::after {
-    content: "";
-    position: absolute;
-    width: v-bind("hoverBarStyle.width");
-    height: v-bind("hoverBarStyle.height");
-    left: v-bind("hoverBarStyle.left");
-    bottom: v-bind("hoverBarStyle.bottom");
-    background-color: #409eff;
-    transition: v-bind("hoverBarTransition");
-  }
-}
+  &__nav-wrapper {
+    position: relative;
+    width: fit-content;
+    display: flex;
 
-/* 控制按钮 */
-.base-tabs__nav-arrow {
-  position: sticky;
-  /* background-color: #409eff; */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* z-index: 1; */
-  transition: 0.5s ease;
+    /* ? nav-wrapper 的下方的装饰线 */
+    &::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: #ccc;
+    }
 
-  width: 0;
-  flex-shrink: 0;
-
-  cursor: pointer;
-
-  svg {
-    z-index: 1;
-    height: 0;
+    /* ? 底边悬浮条 */
+    &::after {
+      content: "";
+      position: absolute;
+      width: v-bind("hoverBarStyle.width");
+      height: v-bind("hoverBarStyle.height");
+      left: v-bind("hoverBarStyle.left");
+      bottom: v-bind("hoverBarStyle.bottom");
+      background-color: #409eff;
+      transition: v-bind("hoverBarTransition");
+    }
   }
 
-  &[data-show="true"] {
-    width: 24px;
+  /* 控制按钮 */
+  &__nav-arrow {
+    position: sticky;
+    /* background-color: #409eff; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* z-index: 1; */
+    transition: 0.5s ease;
+
+    width: 0;
+    flex-shrink: 0;
+
+    cursor: pointer;
+
     svg {
-      height: 100%;
+      z-index: 1;
+      height: 0;
     }
-  }
 
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    backdrop-filter: blur(4px);
-    transition: 0.5s ease;
-  }
+    &[data-show="true"] {
+      width: 24px;
+      svg {
+        height: 100%;
+      }
+    }
 
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: 0.5s ease;
-  }
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(4px);
+      transition: 0.5s ease;
+    }
 
-  &:hover::after {
-    opacity: 1;
-  }
-
-  &.base-tabs__nav-arrow-left {
-    left: 0;
-    z-index: 1;
     &::after {
-      background: linear-gradient(
-        to right,
-        hsla(210, 100%, 63%, 0.8),
-        hsla(210, 100%, 63%, 0)
-      );
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: 0.5s ease;
+    }
+
+    &:hover::after {
+      opacity: 1;
+    }
+
+    &-left {
+      left: 0;
+      z-index: 1;
+      &::after {
+        background: linear-gradient(
+          to right,
+          hsla(210, 100%, 63%, 0.8),
+          hsla(210, 100%, 63%, 0)
+        );
+      }
+    }
+
+    &-right {
+      right: 0;
+      margin-left: auto;
+      &::after {
+        background: linear-gradient(
+          to left,
+          hsla(210, 100%, 63%, 0.8),
+          hsla(210, 100%, 63%, 0)
+        );
+      }
     }
   }
-  &.base-tabs__nav-arrow-right {
-    right: 0;
-    margin-left: auto;
-    &::after {
-      background: linear-gradient(
-        to left,
-        hsla(210, 100%, 63%, 0.8),
-        hsla(210, 100%, 63%, 0)
-      );
+
+  &__tab-item {
+    padding: 0px 16px;
+    line-height: 2;
+    text-wrap: nowrap;
+    cursor: pointer;
+    user-select: none;
+
+    transition: color 0.5s ease;
+    &:hover {
+      color: hsl(210, 100%, 63%);
     }
   }
-}
 
-.base-tabs__tab-item {
-  padding: 0px 16px;
-  line-height: 2;
-  text-wrap: nowrap;
-  cursor: pointer;
-  user-select: none;
-
-  transition: color 0.5s ease;
-  &:hover {
+  &__tab-item.active {
     color: hsl(210, 100%, 63%);
   }
-}
 
-.base-tabs__tab-item.active {
-  color: hsl(210, 100%, 63%);
-}
+  &__content {
+    flex: 1;
+    overflow: auto;
+  }
 
-.base-tabs__content {
-  flex: 1;
-  overflow: auto;
-}
-
-/* 暗黑模式 */
-.base-tabs__container--dark {
-  .base-tabs__nav-wrap {
-    &::before {
-      background-color: hsl(228, 3%, 31%);
-    }
+  /* 暗黑模式 */
+  &--dark &__nav-wrapper::before {
+    background-color: hsl(228, 3%, 31%);
   }
 }
 </style>
