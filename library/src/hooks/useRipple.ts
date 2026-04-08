@@ -1,12 +1,14 @@
+import type { Directive, MaybeRefOrGetter } from "vue";
 import {
+  computed,
+  getCurrentInstance,
+  isRef,
   onMounted,
   onUnmounted,
   ref,
+  toValue,
   watch,
-  getCurrentInstance,
-  isRef,
 } from "vue";
-import type { Directive, Ref } from "vue";
 
 // t 波纹选项
 interface RippleOptions {
@@ -20,14 +22,14 @@ interface RippleOptions {
   allowChildTrigger?: boolean;
 }
 
-// s 波纹样式是否已注入
-let styleInjected = false;
+// s 已注入样式的 root 集合（支持多 ShadowRoot）
+const injectedRoots = new WeakSet<Node>(); // ⭐ 修改：替代全局 boolean
 
 // f 波纹样式注入
-function injectRippleStyle() {
-  // 防止重复注入
-  if (styleInjected) return;
-  styleInjected = true;
+function injectRippleStyle(root: Document | ShadowRoot) {
+  // 防止重复注入（按 root 维度）
+  if (injectedRoots.has(root)) return;
+  injectedRoots.add(root);
 
   const style = document.createElement("style");
   style.setAttribute("data-ripple-style", "");
@@ -51,7 +53,17 @@ function injectRippleStyle() {
 		}
 	`;
 
-  document.head.appendChild(style);
+  // ⭐ 修改：根据 root 类型决定注入位置
+  const target = root instanceof Document ? root.head : root;
+
+  target.appendChild(style);
+}
+
+// f 解析 root（根据元素动态获取） ⭐ 新增
+function resolveRoot(el: HTMLElement | null): Document | ShadowRoot {
+  if (!el) return document;
+  const root = el.getRootNode();
+  return root instanceof ShadowRoot ? root : document;
 }
 
 /**
@@ -60,18 +72,17 @@ function injectRippleStyle() {
  * @param options 配置选项
  */
 export function useRipple(
-  target: Ref<HTMLElement | null> | HTMLElement | null,
+  target: MaybeRefOrGetter<HTMLElement | null | undefined>,
   options: RippleOptions = {},
 ) {
-  // ? 注入波纹样式
-  injectRippleStyle();
+  const targetDOM = computed(() => toValue(target));
 
   const {
     duration = 600,
     color = "auto",
     zIndex = 0,
     allowChildTrigger = true,
-  } = options;
+  } = options; // ⭐ 修改：不再提前解构 root
 
   // 上下文
   const instance = getCurrentInstance();
@@ -115,7 +126,7 @@ export function useRipple(
     const y = e.clientY - rect.top;
 
     // 创建波纹元素
-    const ripple = document.createElement("span");
+    const ripple = el.ownerDocument.createElement("span"); // ⭐ 修改：使用 ownerDocument
 
     ripple.className = "__ripple__";
     ripple.style.width = ripple.style.height = `${size}px`;
@@ -145,7 +156,6 @@ export function useRipple(
         // 恢复目标元素的 position 和 overflow 样式
         el.style.position = oldStyle.position;
         el.style.overflow = oldStyle.overflow;
-        // console.log('已经没有ripple元素了，恢复样式')
       },
       { once: true },
     );
@@ -156,6 +166,11 @@ export function useRipple(
     if (!el || el === currentEl) return;
     // 解绑上一个元素的事件
     unbind();
+
+    // ⭐ 修改：在真实 DOM 存在后再注入样式
+    const root = resolveRoot(el);
+    injectRippleStyle(root);
+
     el.addEventListener("pointerdown", onPointerDown);
     currentEl = el;
   };
@@ -171,13 +186,13 @@ export function useRipple(
     // ? 只有在 setup 环境下才注册生命周期
     // f 组件挂载时绑定事件
     onMounted(() => {
-      bind(isRef(target) ? target.value : target);
+      if (targetDOM.value) bind(targetDOM.value);
     });
 
     if (isRef(target)) {
       // f 监听目标元素变化，绑定/解绑事件
       watch(target, (el) => {
-        bind(el);
+        if (el) bind(el);
       });
     }
 
