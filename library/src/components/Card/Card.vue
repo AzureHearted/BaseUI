@@ -60,7 +60,7 @@ const emits = defineEmits<CardEmits>();
   }
 
   &__content {
-    /* flex-grow: 1; */
+    flex-grow: 1;
     flex-shrink: 0;
   }
 
