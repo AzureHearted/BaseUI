@@ -5,14 +5,14 @@ import type { HTMLAttributes } from "vue";
 export interface WindowProps extends Omit<FrameProps, "isMax"> {
   /** 边界容器 (如果不传入则默认使用窗口尺寸)  */
   boundaryContainer?: MaybeComputedElementRef;
-  /** 初始窗口宽度 @default 500 */
-  initWidth?: number;
-  /** 初始窗口高度 @default 400 */
-  initHeight?: number;
-  /** 最小宽度 @default 200 */
-  minWidth?: number;
-  /** 最小高度 @default 120 */
-  minHeight?: number;
+  /** 初始窗口宽度 @default '500px' */
+  initWidth?: number | string;
+  /** 初始窗口高度 @default '400px' */
+  initHeight?: number | string;
+  /** 最小宽度 @default '200px' */
+  minWidth?: number | string;
+  /** 最小高度 @default '120px' */
+  minHeight?: number | string;
   /** 安全边界
    * @default
    * { left: 4, top: 4, right: 4, bottom: 4 } */
@@ -30,7 +30,7 @@ export interface WindowEmits {
   minimize: [];
 }
 
-export interface FrameProps extends Omit<TitleBarProps, "theme"> {
+export interface FrameProps extends TitleBarProps {
   /** @default true */
   showTitleBar?: boolean;
   /** 是否是最大化状态 @default false */

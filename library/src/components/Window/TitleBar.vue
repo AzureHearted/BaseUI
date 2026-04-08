@@ -197,7 +197,7 @@ const onChangeWindow = (type: "min" | "scale" | "close"): void => {
 
   /* 暗色模式 */
   &--dark &__button {
-    --fillColor: hsl(0, 0%, 70%);
+    --fillColor: hsl(0, 0%, 90%);
     --bgHoverColor: hsl(228, 3%, 32%);
   }
 }

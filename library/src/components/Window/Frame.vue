@@ -36,16 +36,17 @@
 </template>
 <script setup lang="ts">
 import TitleBar from "./TitleBar.vue";
-import { usePreferredDark } from "@vueuse/core";
-import { useTemplateRef } from "vue";
+import { computed, inject, useTemplateRef } from "vue";
 import type { ShallowRef } from "vue";
 import type { FrameEmits, FrameProps } from "./types";
+import { ThemeKey } from "@/theme";
+import { resolveIsDark } from "@/utils/theme";
 
 defineOptions({
   name: "BaseFrame",
 });
 
-withDefaults(defineProps<FrameProps>(), {
+const props = withDefaults(defineProps<FrameProps>(), {
   showTitleBar: true,
   title: "窗口",
   showMaxButton: true,
@@ -53,7 +54,24 @@ withDefaults(defineProps<FrameProps>(), {
   showMinButton: true,
 });
 
-const isDark = usePreferredDark();
+// 主题上下文注入
+const themeContext = inject(ThemeKey, null);
+
+// 主题模式
+const themeMode = computed(() => props.theme ?? "system");
+
+// 主题模式优先级：组件 prop > provider > system
+const isDark = computed(() => {
+  if (props.theme) {
+    return resolveIsDark(themeMode.value);
+  }
+
+  if (themeContext) {
+    return themeContext.isDark.value;
+  }
+
+  return resolveIsDark("system");
+});
 
 const titleBarRef = useTemplateRef("titleBarRef") as ShallowRef<
   InstanceType<typeof TitleBar>

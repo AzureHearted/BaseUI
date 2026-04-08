@@ -2,6 +2,9 @@
   <div
     v-if="show"
     class="base-window"
+    :class="{
+      'base-window--dark': isDark,
+    }"
     :data-maximized="state.maximized"
     :data-minimized="state.minimized"
     :style="[style, sizeStyle]"
@@ -81,6 +84,8 @@ import {
   ref,
   onActivated,
   onDeactivated,
+  inject,
+  toValue,
 } from "vue";
 import type { ShallowRef, StyleValue } from "vue";
 import BaseFrame from "./Frame.vue";
@@ -89,23 +94,25 @@ import {
   useElementBounding,
   useElementSize,
   useWindowSize,
-  unrefElement,
-  type MaybeComputedElementRef,
+  type MaybeElement,
 } from "@vueuse/core";
 import type { WindowEmits, WindowProps } from "./types";
+import { ThemeKey } from "@/theme";
+import { resolveIsDark } from "@/utils/theme";
+import { parseCssSize } from "@/utils/normalizeCssSize";
 
 defineOptions({
   name: "BaseWindow",
 });
 
 const props = withDefaults(defineProps<WindowProps>(), {
-  initWidth: 500,
-  initHeight: 400,
+  initWidth: "500px",
+  initHeight: "400px",
   showMaxButton: true,
   showCloseButton: true,
   showMinButton: true,
-  minWidth: 200,
-  minHeight: 120,
+  minWidth: "200px",
+  minHeight: "120px",
   safeBoundary: () => ({
     left: 4,
     top: 4,
@@ -115,6 +122,25 @@ const props = withDefaults(defineProps<WindowProps>(), {
 });
 
 const emits = defineEmits<WindowEmits>();
+
+// 主题上下文注入
+const themeContext = inject(ThemeKey, null);
+
+// 主题模式
+const themeMode = computed(() => props.theme ?? "system");
+
+// 主题模式优先级：组件 prop > provider > system
+const isDark = computed(() => {
+  if (props.theme) {
+    return resolveIsDark(themeMode.value);
+  }
+
+  if (themeContext) {
+    return themeContext.isDark.value;
+  }
+
+  return resolveIsDark("system");
+});
 
 const show = defineModel<boolean>("show", { default: false });
 
@@ -126,11 +152,11 @@ const frameBounding = useElementBounding(() => frameRef.value?.$el);
 
 // s 组件状态
 const state = reactive({
-  width: props.initWidth,
-  height: props.initHeight,
+  width: 0,
+  height: 0,
   minimized: false,
   maximized: false,
-  boundaryDOM: null as MaybeComputedElementRef,
+  boundaryDOM: null as MaybeElement,
   /** 冻结标识符 */
   isFreezed: false,
 });
@@ -184,7 +210,17 @@ let position: ReturnType<typeof useDraggable>["position"];
 
 // w 组件挂载时
 onMounted(() => {
-  state.boundaryDOM = unrefElement(props.boundaryContainer);
+  state.boundaryDOM = toValue(props.boundaryContainer);
+
+  state.width = parseCssSize(props.initWidth, {
+    direction: "width",
+    element: (state.boundaryDOM as HTMLElement) ?? null,
+  });
+  state.height = parseCssSize(props.initHeight, {
+    direction: "height",
+    element: (state.boundaryDOM as HTMLElement) ?? null,
+  });
+
   if (state.boundaryDOM) {
     const { stop, width, height } = useElementSize(state.boundaryDOM);
     boundarySize = { width, height };
@@ -276,36 +312,63 @@ onMounted(() => {
         const newPos = { x: position.value.x, y: position.value.y };
         const { left, top, right, bottom } = bounding;
 
+        let newWidth = frameBounding.width.value;
+        let newHeight = frameBounding.height.value;
+
         // 上下边界
-        if (
-          newPos.y + frameBounding.height.value >
-          bottom.value - props.safeBoundary.bottom
-        ) {
-          newPos.y =
-            bottom.value -
-            props.safeBoundary.bottom -
-            frameBounding.height.value;
+        if (newPos.y + newHeight > bottom.value - props.safeBoundary.bottom) {
+          newPos.y = bottom.value - props.safeBoundary.bottom - newHeight;
         }
         if (newPos.y < top.value + props.safeBoundary.top) {
           newPos.y = top.value + props.safeBoundary.top;
         }
         // 左右边界
-        if (
-          newPos.x + frameBounding.width.value >
-          right.value - props.safeBoundary.right
-        ) {
-          newPos.x =
-            right.value - props.safeBoundary.right - frameBounding.width.value;
+        if (newPos.x + newWidth > right.value - props.safeBoundary.right) {
+          newPos.x = right.value - props.safeBoundary.right - newWidth;
         }
         if (newPos.x < left.value + props.safeBoundary.left) {
           newPos.x = left.value + props.safeBoundary.left;
         }
 
+        // 边界约束
+        if (newPos.x < left.value + props.safeBoundary.left) {
+          newWidth =
+            newWidth - (left.value + props.safeBoundary.left - newPos.x);
+          newPos.x = left.value + props.safeBoundary.left;
+        }
+        if (newPos.x + newWidth > right.value - props.safeBoundary.right) {
+          newWidth = right.value - props.safeBoundary.right - newPos.x;
+        }
+        if (newPos.y < top.value + props.safeBoundary.top) {
+          newHeight =
+            newHeight - (top.value + props.safeBoundary.top - newPos.y);
+          newPos.y = top.value + props.safeBoundary.top;
+        }
+        if (newPos.y + newHeight > bottom.value - props.safeBoundary.bottom) {
+          newHeight = bottom.value - props.safeBoundary.bottom - newPos.y;
+        }
+
+        state.width = newWidth;
+        state.height = newHeight;
         position.value = newPos;
       });
     },
     { deep: true },
   );
+});
+
+const minWidth = computed<number>(() => {
+  return parseCssSize(props.minWidth, {
+    direction: "width",
+    element: (state.boundaryDOM as HTMLElement) ?? null,
+  });
+});
+
+const minHeight = computed<number>(() => {
+  return parseCssSize(props.minHeight, {
+    direction: "height",
+    element: (state.boundaryDOM as HTMLElement) ?? null,
+  });
 });
 
 // f 调整窗口大小
@@ -356,18 +419,18 @@ function onPointerdownResizeBar(
       newY = startPos.y + dy;
     }
 
-    if (newWidth < props.minWidth) {
+    if (newWidth < minWidth.value) {
       if (type.includes("left")) {
-        newX -= props.minWidth - newWidth;
+        newX -= minWidth.value - newWidth;
       }
-      newWidth = props.minWidth;
+      newWidth = minWidth.value;
     }
 
-    if (newHeight < props.minHeight) {
+    if (newHeight < minHeight.value) {
       if (type.includes("top")) {
-        newY -= props.minHeight - newHeight;
+        newY -= minHeight.value - newHeight;
       }
-      newHeight = props.minHeight;
+      newHeight = minHeight.value;
     }
 
     // 边界约束
@@ -424,10 +487,22 @@ const onChangeWindow: InstanceType<typeof BaseFrame>["onWindow-change"] = (
 
 <style lang="scss" scoped>
 .base-window {
+  // 亮色模式
+  --color: #{getThemeColor(light, text)};
+  --bgColor: #{getThemeColor(light, background)};
+
+  // 暗色模式
+  &--dark {
+    --color: #{getThemeColor(dark, text)};
+    --bgColor: #{getThemeColor(dark, background)};
+  }
+
   &__frame {
     border-radius: 6px;
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
+    color: var(--color);
+    background-color: color-mix(in srgb, var(--bgColor) 30%, transparent);
     border: 1px solid hsla(0, 0%, 100%, 0.3);
     box-shadow: 0 0 10px hsla(0, 0%, 0%, 0.5);
     overflow: hidden;
