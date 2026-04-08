@@ -37,7 +37,7 @@ import {
   type ShallowRef,
 } from "vue";
 import type { SplitProps } from "./types";
-import { useElementSize } from "@vueuse/core";
+import { useElementSize, watchOnce } from "@vueuse/core";
 
 defineOptions({
   name: "BaseSplit",
@@ -75,12 +75,35 @@ const containerSize = computed(() => {
 
 const size = defineModel<number | string>("size");
 
+onMounted(() => {
+  if (containerSize.value !== 0) {
+    initSize();
+  } else {
+    watchOnce(containerSize, () => {
+      initSize();
+    });
+  }
+});
+
+// f 初始化
+function initSize() {
+  const containerDom = containerRef.value;
+  if (!containerDom) return;
+
+  let iSize = size.value ?? props.defaultSize;
+
+  updateSize(parseSizeToNumber(iSize), props.basePane);
+
+  // ? 更新百分比
+  state.percentage = pane1Size.value / containerSize.value;
+}
+
 // f 计算size值
 function parseSizeToNumber(size: string | number) {
   if (typeof size === "number") {
     return containerSize.value * size;
   } else {
-    return parseInt(size);
+    return parseFloat(size);
   }
 }
 
@@ -201,23 +224,6 @@ const anotherMaxSize = computed(() => {
     containerSize.value - props.resizeTriggerSize,
   );
 });
-
-onMounted(() => {
-  initSize();
-});
-
-// f 初始化
-function initSize() {
-  const containerDom = containerRef.value;
-  if (!containerDom) return;
-
-  let iSize = size.value ?? props.defaultSize;
-
-  updateSize(parseSizeToNumber(iSize), props.basePane);
-
-  // ? 更新百分比
-  state.percentage = pane1Size.value / containerSize.value;
-}
 
 // f 更新 model 值
 function updateModel() {
