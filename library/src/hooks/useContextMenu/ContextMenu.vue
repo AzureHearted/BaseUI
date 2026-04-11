@@ -5,7 +5,7 @@
       'base-context-menu--dark': isDark,
     }"
     @click.self="closeMenu"
-    @contextmenu.prevent
+    @contextmenu.stop
   >
     <div
       ref="contextMenuDOM"
@@ -171,7 +171,6 @@ function handleShow(e: PointerEvent) {
 // 点击菜单外面区域时隐藏菜单
 onClickOutside(contextMenuDOM, (e) => {
   if (state.isVisible) {
-    e.preventDefault();
     e.stopPropagation();
     closeMenu();
   }
