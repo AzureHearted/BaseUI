@@ -1,5 +1,6 @@
 <template>
   <div class="base-tabs" :class="{ 'base-tabs--dark': isDark }">
+    <!-- 标签栏 -->
     <div ref="navRef" class="base-tabs__nav">
       <!-- ? 向左切换控制条 -->
       <div
@@ -207,16 +208,17 @@ function toggleTab(direction: "pre" | "next") {
 
   if (tabDOMs.value && currentIndex !== targetIndex) {
     activeTab.value = tabs[targetIndex].name;
-    scrollIntoViewToTab(targetIndex, scrollBehavior);
+    scrollIntoViewToTab(activeTab.value, scrollBehavior);
   }
 }
 
 // f 滚动到指定tab
 function scrollIntoViewToTab(
-  index: number,
+  name: string,
   behavior: ScrollOptions["behavior"] = "auto",
 ) {
   if (!tabDOMs.value) return;
+  const index = tabs.findIndex((x) => x.name === name);
   const tabDOM = tabDOMs.value[index];
   tabDOM?.scrollIntoView({
     behavior,
@@ -227,8 +229,7 @@ function scrollIntoViewToTab(
 // w 组件激活时尝试滚动到激活的tab
 onActivated(() => {
   requestAnimationFrame(() => {
-    const index = tabs.findIndex((t) => t.name === activeTab.value);
-    scrollIntoViewToTab(index);
+    scrollIntoViewToTab(activeTab.value);
   });
 });
 
@@ -242,16 +243,20 @@ function registerTab(tab: TabItemRegistered) {
   }
   // 判断是否已经注册过
   const index = tabs.findIndex((t) => t.name == tab.name);
-  // console.log(index);
   // 如果已经注册过了就不重复注册
   if (index > -1) return;
   // 如果没有注册过就注册
   tabs.push(tab);
   // 然后下一个渲染时机判断是否指定默认的tab
   requestAnimationFrame(() => {
-    if (tabs.length > 0 && activeTab.value === "") {
-      // 如果默认Tab为空或不存在则指定首个Tab为默认Tab
-      activeTab.value = tabs[0].name;
+    if (tabs.length > 0) {
+      if (activeTab.value === "") {
+        // 如果默认Tab为空或不存在则指定首个Tab为默认Tab
+        activeTab.value = tabs[0].name;
+      }
+      if (activeTab.value === tab.name) {
+        scrollIntoViewToTab(tab.name);
+      }
     }
   });
 }
@@ -265,7 +270,6 @@ async function updateTab(
   if (tab) {
     // 先记录旧name
     const oldName = tab.name;
-    // console.log(newName);
     tab.name = newName ? newName : tab.name;
     tab.label = newLabel ? newLabel : tab.label;
     // 判断如果修改的是当前激活的tab的同时修改active
