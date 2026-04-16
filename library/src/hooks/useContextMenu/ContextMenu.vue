@@ -98,6 +98,7 @@ function showMenu<T>(
 ): Promise<T | null> {
   // 阻止默认右键菜单
   e.preventDefault();
+  e.stopPropagation();
 
   // 显示菜单
   return new Promise(async (resolve) => {
