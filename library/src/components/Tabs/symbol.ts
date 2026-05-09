@@ -1,4 +1,4 @@
-import type { InjectionKey, Reactive, Ref } from "vue";
+import type { ComputedRef, InjectionKey, Reactive, Ref } from "vue";
 import type { TabItem, TabItemRegistered } from "./types";
 
 interface TabsContext {
@@ -7,6 +7,7 @@ interface TabsContext {
   unregisterTab: (id: string) => Promise<void>;
   active: Ref<string>;
   tabs: Reactive<TabItemRegistered[]>;
+  filteredTabs: ComputedRef<TabItemRegistered[]>;
 }
 
 export const tabsSymbol: InjectionKey<TabsContext> = Symbol("tabs");

@@ -5,7 +5,7 @@
       <!-- ? 向左切换控制条 -->
       <div
         ref="navLeftButton"
-        :data-show="showButtons && tabs.length > 0"
+        :data-show="showButtons && filteredTabs.length > 0"
         class="base-tabs__nav-arrow base-tabs__nav-arrow-left"
         @click.stop.prevent="toggleTab('pre')"
         @transitionend="updateTabBounding()"
@@ -33,7 +33,7 @@
           ref="tabRefs"
           class="base-tabs__tab-item"
           :class="{ active: activeTab === tab.name }"
-          v-for="tab in tabs"
+          v-for="tab in filteredTabs"
           :key="tab.id"
           :style="{
             pointerEvents: isNavDragging ? 'none' : 'auto',
@@ -47,7 +47,7 @@
       <!-- ? 向右切换控制条 -->
       <div
         ref="navRightButton"
-        :data-show="showButtons && tabs.length > 0"
+        :data-show="showButtons && filteredTabs.length > 0"
         class="base-tabs__nav-arrow base-tabs__nav-arrow-right"
         @click.stop.prevent="toggleTab('next')"
       >
@@ -72,7 +72,7 @@
     <!-- 实际的渲染内容 -->
     <div class="base-tabs__content" :style="[contentStyle]">
       <!-- s Tab内容 -->
-      <template v-for="tab in tabs" :key="tab.id">
+      <template v-for="tab in filteredTabs" :key="tab.id">
         <keep-alive>
           <component
             v-if="tab.name === activeTab"
@@ -120,7 +120,7 @@ import {
   watch,
 } from "vue";
 import { tabsSymbol } from "./symbol";
-import type { TabItem, TabItemRegistered, TabsProps } from "./types";
+import type { TabItem, TabItemRegistered, TabsEmits, TabsProps } from "./types";
 
 // 组件基本信息
 defineOptions({
@@ -152,9 +152,7 @@ const isDark = computed(() => {
 });
 
 // emits 定义
-const emits = defineEmits<{
-  change: [name: string];
-}>();
+const emits = defineEmits<TabsEmits>();
 
 // s 激活的tab
 const activeTab = defineModel<string>({ default: "" });
@@ -175,6 +173,8 @@ watch(activeTab, (newValue, oldValue) => {
 // s 所有注册过渡tab对象
 const tabs = reactive<TabItemRegistered[]>([]);
 
+const filteredTabs = computed(() => tabs.sort((a, b) => a.order - b.order));
+
 // ? 由于组件尚未实现虚拟化列表所以限制最大tab数量
 const MAX_TAB_COUNT = 500;
 
@@ -185,7 +185,9 @@ const tabDOMs = useTemplateRef("tabRefs") as ShallowRef<
 
 // f 切换标签
 function toggleTab(direction: "pre" | "next") {
-  const currentIndex = tabs.findIndex((t) => t.name === activeTab.value);
+  const currentIndex = filteredTabs.value.findIndex(
+    (t) => t.name === activeTab.value,
+  );
   if (currentIndex < 0) return;
   let targetIndex = currentIndex;
   let scrollBehavior: ScrollOptions["behavior"] = "smooth";
@@ -194,11 +196,11 @@ function toggleTab(direction: "pre" | "next") {
     if (currentIndex > 0) {
       targetIndex = currentIndex - 1;
     } else {
-      targetIndex = tabs.length - 1;
+      targetIndex = filteredTabs.value.length - 1;
       scrollBehavior = "instant";
     }
   } else {
-    if (currentIndex < tabs.length - 1) {
+    if (currentIndex < filteredTabs.value.length - 1) {
       targetIndex = currentIndex + 1;
     } else {
       targetIndex = 0;
@@ -218,7 +220,7 @@ function scrollIntoViewToTab(
   behavior: ScrollOptions["behavior"] = "auto",
 ) {
   if (!tabDOMs.value) return;
-  const index = tabs.findIndex((x) => x.name === name);
+  const index = filteredTabs.value.findIndex((x) => x.name === name);
   const tabDOM = tabDOMs.value[index];
   tabDOM?.scrollIntoView({
     behavior,
@@ -234,8 +236,8 @@ onActivated(() => {
 });
 
 // f tab注册函数
-function registerTab(tab: TabItemRegistered) {
-  if (tabs.length + 1 > MAX_TAB_COUNT) {
+async function registerTab(tab: TabItemRegistered) {
+  if (filteredTabs.value.length + 1 > MAX_TAB_COUNT) {
     console.warn(
       `[base-tab] 为保证性能，超出 ${MAX_TAB_COUNT} 个的 base-tab-pane 将被忽略`,
     );
@@ -247,12 +249,14 @@ function registerTab(tab: TabItemRegistered) {
   if (index > -1) return;
   // 如果没有注册过就注册
   tabs.push(tab);
+
+  await nextTick();
   // 然后下一个渲染时机判断是否指定默认的tab
   requestAnimationFrame(() => {
-    if (tabs.length > 0) {
+    if (filteredTabs.value.length > 0) {
       if (activeTab.value === "") {
         // 如果默认Tab为空或不存在则指定首个Tab为默认Tab
-        activeTab.value = tabs[0].name;
+        activeTab.value = filteredTabs.value[0].name;
       }
       if (activeTab.value === tab.name) {
         scrollIntoViewToTab(tab.name);
@@ -262,16 +266,15 @@ function registerTab(tab: TabItemRegistered) {
 }
 
 // f 更新Tab
-async function updateTab(
-  id: string,
-  { name: newName, label: newLabel }: Partial<TabItem>,
-) {
-  const tab = tabs.find((t) => t.id === id);
+async function updateTab(id: string, { name, label, order }: Partial<TabItem>) {
+  const tab = filteredTabs.value.find((t) => t.id === id);
   if (tab) {
     // 先记录旧name
     const oldName = tab.name;
-    tab.name = newName ? newName : tab.name;
-    tab.label = newLabel ? newLabel : tab.label;
+    tab.name = name ? name : tab.name;
+    tab.label = label ? label : tab.label;
+    tab.order = order ? order : tab.order;
+
     // 判断如果修改的是当前激活的tab的同时修改active
     if (oldName === activeTab.value) {
       activeTab.value = tab.name;
@@ -290,14 +293,13 @@ async function unregisterTab(id: string) {
       activeTab.value = preTab.name;
     }
     // 如果tab列表为空则active置为空
-    if (!tabs.length) {
+    if (!filteredTabs.value.length) {
       activeTab.value = "";
     }
 
     // 同步清除缓存
     tabBoundingCache.delete(tab.name);
 
-    // await nextTick()
     // 先取消悬浮条的过渡动画
     hoverBarTransition.value = "unset";
     requestAnimationFrame(() => {
@@ -470,18 +472,22 @@ const tabBoundingCache = shallowReactive(
 );
 // 组件卸载时清除缓存
 onUnmounted(() => tabBoundingCache.clear());
+
 // 被激活的tab的bounding尺寸
 const activeTabBounding = computed(() => {
   if (!activeTab.value) return;
-  const index = tabs.findIndex((t) => t.name === activeTab.value);
+  const index = filteredTabs.value.findIndex((t) => t.name === activeTab.value);
   if (index > -1) {
-    const name = tabs[index].name;
+    const name = filteredTabs.value[index].name;
     if (tabBoundingCache.has(name)) {
       return tabBoundingCache.get(name);
     } else {
       if (!tabDOMs.value || !tabDOMs.value.length) return;
       const tabDOM = tabDOMs.value[index];
-      const bounding = useElementBounding(tabDOM, { reset: false });
+      const bounding = useElementBounding(tabDOM, {
+        reset: false,
+        immediate: true,
+      });
       tabBoundingCache.set(name, bounding);
       return bounding;
     }
@@ -515,7 +521,8 @@ provide(tabsSymbol, {
   updateTab,
   unregisterTab,
   active: activeTab,
-  tabs: tabs,
+  tabs,
+  filteredTabs,
 });
 </script>
 

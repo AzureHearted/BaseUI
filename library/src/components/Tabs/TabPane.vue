@@ -8,10 +8,10 @@ import {
   markRaw,
   onMounted,
   watch,
-  onUnmounted,
+  onBeforeUnmount,
 } from "vue";
 import { tabsSymbol } from "./symbol";
-import type { TabPaneProps } from "./types";
+import type { TabItemRegistered, TabPaneProps } from "./types";
 
 // 组件基本信息
 defineOptions({
@@ -34,9 +34,54 @@ const injected = inject(tabsSymbol, null);
 const id = crypto.randomUUID();
 
 // 监听props
-watch([() => props.name, () => props.label], ([newName, newLabel]) => {
-  injected?.updateTab(id, { name: newName, label: newLabel });
-});
+watch(
+  [() => props.name, () => props.label, () => props.order],
+  ([newName, newLabel, newOrder]) => {
+    injected?.updateTab(id, {
+      name: newName,
+      label: newLabel,
+      order: newOrder,
+    });
+  },
+);
+
+function createTab(raw: TabPaneProps): TabItemRegistered {
+  let order: number;
+  if (!raw.order) {
+    let maxOrder = -1;
+    if (injected?.filteredTabs) {
+      maxOrder = Math.max(...injected.filteredTabs.value.map((x) => x.order));
+    }
+    order = maxOrder + 1;
+  } else {
+    order = raw.order;
+  }
+  return {
+    id: id,
+    name: raw.name,
+    label: raw.label ?? raw.name,
+    order,
+    defaultVNodes: markRaw({
+      render() {
+        if (slots.default) {
+          return slots.default({});
+        } else {
+          return [];
+        }
+      },
+    }),
+    labelVNodes: markRaw({
+      render: () => {
+        if (slots.label) {
+          return slots.label({});
+        } else {
+          // 如果没有传入tab插槽则默认使用props.label
+          return props.label;
+        }
+      },
+    }),
+  };
+}
 
 // 组件挂载时
 onMounted(() => {
@@ -64,38 +109,14 @@ onMounted(() => {
   }
 
   // 创建注册对象
-  const tabItem: Parameters<typeof injected.registerTab>["0"] = {
-    id: id,
-    name: props.name,
-    label: props.label || props.name,
-    // ? 使用markRaw包装对象告诉 Vue，这个对象不要被响应式系统代理
-    defaultVNodes: markRaw({
-      render() {
-        if (slots.default) {
-          return slots.default({});
-        } else {
-          return [];
-        }
-      },
-    }),
-    labelVNodes: markRaw({
-      render: () => {
-        if (slots.label) {
-          return slots.label({});
-        } else {
-          // 如果没有传入tab插槽则默认使用props.label
-          return props.label;
-        }
-      },
-    }),
-  };
+  const tabItem = createTab(props);
 
   // 调用父组件提供的tab注册函数注册tab
   injected.registerTab(tabItem);
 });
 
 // 组件卸载时通知父组件取消注册
-onUnmounted(() => {
+onBeforeUnmount(() => {
   injected?.unregisterTab(id);
 });
 </script>

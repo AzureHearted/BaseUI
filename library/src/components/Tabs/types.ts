@@ -9,9 +9,15 @@ export interface TabsProps {
   showButtons?: boolean;
 }
 
+export interface TabsEmits {
+  change: [name: string];
+}
+
 export interface TabPaneProps {
   /** tab 名称 (唯一值) */
   name: string;
+  /** 顺序 (唯一值) */
+  order?: number;
   /** tab 标签 */
   label?: string;
 }
@@ -22,6 +28,8 @@ export interface TabItem {
   name: string;
   /** tab 标签 */
   label: string;
+  /** 顺序 (唯一值) */
+  order: number;
 }
 
 // t 已注册的Tab数据

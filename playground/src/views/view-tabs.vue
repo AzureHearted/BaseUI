@@ -22,39 +22,66 @@
         style="height: 100%; overflow: hidden"
       >
         <BaseTabPane
-          v-for="index in state.count"
-          :key="index"
-          :name="`tab_${index}`"
+          v-for="(tab, index) in tabs"
+          :key="tab.name"
+          :name="tab.name"
+          :order="index"
         >
           <template #label>
-            {{ index }}
+            <BaseFlex align="center" :gap="8">
+              <span> {{ tab.label }} </span>
+              <BaseButton size="tiny" @click.stop="() => addTab(index)">
+                +
+              </BaseButton>
+              <BaseButton size="tiny" @click.stop="() => removeTab(index)">
+                -
+              </BaseButton>
+            </BaseFlex>
           </template>
           <div style="padding: 4px">tab - {{ index }} 内容</div>
         </BaseTabPane>
-        <BaseTabPane name="#">
-          <template #label>
-            <div style="display: flex; align-items: center; gap: 4px">
-              <!-- <span style="line-height: 1">
-                <icon-mdi-account-supervisor-circle />
-              </span> -->
-              测试
-            </div>
-          </template>
-          <div style="height: 1000px">测试</div>
-        </BaseTabPane>
+
       </BaseTabs>
     </template>
   </BaseSplit>
 </template>
 
 <script lang="ts" setup>
-import { BaseSplit, BaseTabs, BaseTabPane, BaseFlex } from "base-ui";
-import { reactive } from "vue";
+import {
+  BaseSplit,
+  BaseTabs,
+  BaseTabPane,
+  BaseFlex,
+  BaseButton,
+} from "base-ui";
+import type { TabPaneProps } from "node_modules/base-ui/dist/components/Tabs/types";
+import { reactive, ref } from "vue";
 
 const state = reactive({
   count: 2,
   showTabsCrl: false,
 });
+
+const tabs = ref<TabPaneProps[]>([
+  createTab({ label: "标签页1" }),
+  createTab({ label: "标签页2" }),
+]);
+
+function addTab(currentIndex: number) {
+  const newTab = createTab();
+  tabs.value.splice(currentIndex + 1, 0, newTab);
+}
+
+function removeTab(index: number) {
+  tabs.value.splice(index, 1);
+}
+
+function createTab(raw?: Partial<TabPaneProps>): TabPaneProps {
+  return {
+    name: raw?.name ?? crypto.randomUUID(),
+    label: raw?.label ?? "新标签页",
+  };
+}
 </script>
 
 <style lang="scss" scoped></style>
