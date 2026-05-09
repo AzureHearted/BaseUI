@@ -492,6 +492,7 @@ async function updateActiveTabBounding(
   tabs: TabItemRegistered[],
 ) {
   const bounding = await getActiveBounding(active, tabs);
+  await nextTick();
   bounding?.update();
   // 判断有没有激活元素
   if (bounding) {
