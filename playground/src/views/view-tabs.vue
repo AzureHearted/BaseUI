@@ -20,6 +20,7 @@
       <BaseTabs
         :show-buttons="state.showTabsCrl"
         style="height: 100%; overflow: hidden"
+        v-model="currentTab"
       >
         <BaseTabPane
           v-for="(tab, index) in tabs"
@@ -38,9 +39,8 @@
               </BaseButton>
             </BaseFlex>
           </template>
-          <div style="padding: 4px">tab - {{ index }} 内容</div>
+          <div style="padding: 4px">tab - {{ tab.label }}</div>
         </BaseTabPane>
-
       </BaseTabs>
     </template>
   </BaseSplit>
@@ -55,7 +55,7 @@ import {
   BaseButton,
 } from "base-ui";
 import type { TabPaneProps } from "node_modules/base-ui/dist/components/Tabs/types";
-import { reactive, ref } from "vue";
+import { nextTick, reactive, ref } from "vue";
 
 const state = reactive({
   count: 2,
@@ -67,9 +67,13 @@ const tabs = ref<TabPaneProps[]>([
   createTab({ label: "标签页2" }),
 ]);
 
-function addTab(currentIndex: number) {
+const currentTab = ref<string>();
+
+async function addTab(currentIndex: number) {
   const newTab = createTab();
   tabs.value.splice(currentIndex + 1, 0, newTab);
+  await nextTick();
+  currentTab.value = newTab.name;
 }
 
 function removeTab(index: number) {
@@ -77,9 +81,10 @@ function removeTab(index: number) {
 }
 
 function createTab(raw?: Partial<TabPaneProps>): TabPaneProps {
+  const name = raw?.name ?? crypto.randomUUID();
   return {
     name: raw?.name ?? crypto.randomUUID(),
-    label: raw?.label ?? "新标签页",
+    label: raw?.label ?? `新标签页 - ${name}`,
   };
 }
 </script>

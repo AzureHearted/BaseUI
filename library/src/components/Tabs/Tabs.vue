@@ -162,8 +162,8 @@ watch(activeTab, (newValue, oldValue) => {
     // 当 activeTab 变化时发送 emits
     emits("change", newValue);
   }
-
   if (!oldValue) return;
+
   hoverBarTransition.value = "0.5s ease";
   requestAnimationFrame(() => {
     hoverBarTransition.value = "unset";
@@ -455,9 +455,7 @@ async function updateTabBounding() {
   // if (state.isFrozen) return
   await nextTick();
   navWrapBounding.update();
-  tabBoundingCache.forEach((x) => {
-    x.update();
-  });
+  tabBoundingCache.forEach((x) => x.update());
 }
 
 // ? 底边悬浮条 hover-bar 相关
@@ -473,44 +471,64 @@ const tabBoundingCache = shallowReactive(
 // 组件卸载时清除缓存
 onUnmounted(() => tabBoundingCache.clear());
 
-// 被激活的tab的bounding尺寸
-const activeTabBounding = computed(() => {
-  if (!activeTab.value) return;
-  const index = filteredTabs.value.findIndex((t) => t.name === activeTab.value);
-  if (index > -1) {
-    const name = filteredTabs.value[index].name;
-    if (tabBoundingCache.has(name)) {
-      return tabBoundingCache.get(name);
-    } else {
-      if (!tabDOMs.value || !tabDOMs.value.length) return;
-      const tabDOM = tabDOMs.value[index];
-      const bounding = useElementBounding(tabDOM, {
-        reset: false,
-        immediate: true,
-      });
-      tabBoundingCache.set(name, bounding);
-      return bounding;
-    }
-  } else {
-    return;
-  }
+// hover-bar 尺寸位置
+const hoverBarStyle = ref<CSSProperties>({
+  left: 0,
+  bottom: 0,
+  width: 0,
+  height: 0,
 });
 
-// j 动态计算 hover-bar 尺寸
-const hoverBarStyle = computed<CSSProperties>(() => {
+watch(
+  [() => activeTab.value, () => filteredTabs.value, () => tabBoundingCache],
+  ([active, tabs]) => {
+    updateActiveTabBounding(active, tabs);
+  },
+  { deep: true },
+);
+
+async function updateActiveTabBounding(
+  active: string,
+  tabs: TabItemRegistered[],
+) {
+  const bounding = await getActiveBounding(active, tabs);
+  bounding?.update();
   // 判断有没有激活元素
-  if (activeTabBounding.value) {
-    const { x, width } = activeTabBounding.value;
-    return {
+  if (bounding) {
+    const { x, width } = bounding;
+    hoverBarStyle.value = {
       left: `${x.value - navWrapBounding.x.value}px`,
       bottom: `${0}px`,
       width: `${width.value}px`,
       height: `${2}px`,
     };
   } else {
-    return { left: 0, bottom: 0, width: 0, height: 0 };
+    hoverBarStyle.value = { left: 0, bottom: 0, width: 0, height: 0 };
   }
-});
+}
+
+async function getActiveBounding(active: string, tabs: TabItemRegistered[]) {
+  await nextTick();
+  if (!active) return;
+  const index = tabs.findIndex((t) => t.name === active);
+  if (index < 0) return;
+  const name = active;
+  if (tabBoundingCache.has(name)) {
+    const bounding = tabBoundingCache.get(name);
+    return bounding;
+  } else {
+    const tabDOM = navWrapDOM.value?.querySelector(
+      "&>.base-tabs__tab-item.active",
+    ) as HTMLElement;
+    if (!tabDOM) return;
+    const bounding = useElementBounding(tabDOM, {
+      reset: false,
+      immediate: true,
+    });
+    tabBoundingCache.set(name, bounding);
+    return bounding;
+  }
+}
 
 // hoverBar 的过渡属性
 const hoverBarTransition = ref<CSSProperties["transition"]>("");
@@ -662,6 +680,16 @@ provide(tabsSymbol, {
     &:hover {
       color: hsl(210, 100%, 63%);
     }
+
+    /* ? 底边悬浮条 */
+    // &::after {
+    //   content: "";
+    //   position: absolute;
+    //   background-color: #409eff;
+    //   inset: 0;
+    //   height: 2px;
+    //   bottom: 0;
+    // }
   }
 
   &__tab-item.active {
